@@ -11,7 +11,7 @@ const commentRoutes = require("./comment");
 
 app.use("/user", userRoutes);
 app.use("/posting", postingRoutes);
-app.use("/");
+app.use("/comment", commentRoutes);
 
 app.use(express.json());
 app.use(cors());
