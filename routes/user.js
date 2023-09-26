@@ -21,3 +21,5 @@ router.get("/register", async (req, res) => {
     console.error(error);
   }
 });
+
+module.exports = router;

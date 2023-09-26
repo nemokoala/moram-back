@@ -60,10 +60,6 @@ app.post("/chat", async (req, res) => {
         },
         {
           role: "user",
-          content: `컴퓨터공학에 다니고 있는 박재연이라고 해`,
-        },
-        {
-          role: "user",
           content: `${content}`,
         },
       ],
@@ -80,13 +76,6 @@ app.post("/chat", async (req, res) => {
   } catch (error) {
     console.error("Error fetching response:", error);
   }
-});
-
-app.post("/register", async (req, res) => {
-  const { email } = req.body;
-  setTimeout(() => {
-    res.send("ok");
-  }, 3000);
 });
 
 app.listen(PORT, () => {
