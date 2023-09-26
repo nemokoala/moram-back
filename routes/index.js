@@ -6,8 +6,12 @@ const PORT = 8000;
 const openai = require("../config/chatgpt");
 
 const userRoutes = require("./user");
+const postingRoutes = require("./posting");
+const commentRoutes = require("./comment");
 
 app.use("/user", userRoutes);
+app.use("/posting", postingRoutes);
+app.use("/");
 
 app.use(express.json());
 app.use(cors());
