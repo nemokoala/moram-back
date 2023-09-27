@@ -5,7 +5,7 @@ const db = require("../config/db");
 router.get("/", async (req, res) => {
   //포스팅 모든 내용 불러오기
   try {
-    const [results] = await pool.query("SELECT * FROM user");
+    const [results] = await pool.query("SELECT * FROM postings");
     res.json(results);
   } catch (error) {
     res.status(500).json({ message: "Server Error" });
@@ -16,7 +16,7 @@ router.get("/", async (req, res) => {
 router.get("/add", async (req, res) => {
   //포스팅 추가
   try {
-    const [results] = await pool.query("SELECT * FROM user");
+    const [results] = await pool.query("SELECT * FROM postings");
     res.json(results);
   } catch (error) {
     res.status(500).json({ message: "Server Error" });
