@@ -4,7 +4,7 @@ const db = require("../config/db");
 
 router.get("/", async (req, res) => {
   try {
-    const [results] = await pool.query("SELECT * FROM user");
+    const [results] = await db.query("SELECT * FROM user");
     res.json(results);
   } catch (error) {
     res.status(500).json({ message: "Server Error" });
@@ -14,7 +14,7 @@ router.get("/", async (req, res) => {
 
 router.get("/register", async (req, res) => {
   try {
-    const [results] = await pool.query("SELECT * FROM user");
+    const [results] = await db.query("SELECT * FROM user");
     res.json(results);
   } catch (error) {
     res.status(500).json({ message: "Server Error" });
