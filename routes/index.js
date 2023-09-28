@@ -8,6 +8,7 @@ const openai = require("../config/chatgpt");
 const userRoutes = require("./user");
 const postingRoutes = require("./posting");
 const commentRoutes = require("./comment");
+const { authenticateUser } = require("../config/middleware");
 
 app.use("/user", userRoutes);
 app.use("/posting", postingRoutes);
@@ -50,9 +51,11 @@ app.post("/posting/add", async (req, res) => {
   }
 });
 
-app.post("/chat", async (req, res) => {
+app.post("/chat", authenticateUser(), async (req, res) => {
   const { content } = req.body;
-  let conversationHistory = [];
+  const user = req.user;
+  if (user.gptCount <= 0)
+    return res.status(500).send("AI 생성 횟수를 모두 사용하셨습니다.");
 
   try {
     const completion = await openai.chat.completions.create({
@@ -60,7 +63,8 @@ app.post("/chat", async (req, res) => {
       messages: [
         {
           role: "system",
-          content: "다음 내용들을 자소서 형식에 맞춰서 작성해줘",
+          content:
+            "다음 내용들을 회사에 지원을 할때 제출할 자소서 형식에 맞춰서 1000토큰 내로 정리해줘",
         },
         {
           role: "user",
@@ -68,7 +72,7 @@ app.post("/chat", async (req, res) => {
         },
       ],
       temperature: 1,
-      max_tokens: 100,
+      max_tokens: 1000,
       top_p: 1,
       frequency_penalty: 0,
       presence_penalty: 0,
@@ -76,7 +80,17 @@ app.post("/chat", async (req, res) => {
 
     const result = completion.choices[0].message.content;
     console.log(result);
-    res.status(200).send(result);
+
+    try {
+      const [results] = await db.query(
+        "UPDATE users SET gptCount = gptCount - 1 WHERE id = ?",
+        [user.id]
+      );
+      res.status(200).send(result);
+    } catch (error) {
+      console.error(error);
+      return res.status(500).send("db 오류 발생.");
+    }
   } catch (error) {
     console.error("Error fetching response:", error);
   }

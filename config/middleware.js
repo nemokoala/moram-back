@@ -1,6 +1,6 @@
 const jwt = require("jsonwebtoken");
 
-module.exports.checkUserId = async (req, res, next) => {
+module.exports.authenticateUser = async (req, res, next) => {
   const token = req.cookies.token || "";
 
   if (!token) return res.status(403).sned("토큰이 없습니다.");
@@ -26,7 +26,7 @@ module.exports.checkUserId = async (req, res, next) => {
 };
 
 /* 
-module.exports.checkUserId = (req, res, next) => {
+module.exports.authenticateUser = (req, res, next) => {
   const userId = req.session.userId;
 
   if (!userId) {
