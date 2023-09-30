@@ -9,7 +9,7 @@ const userRoutes = require("./user");
 const postingRoutes = require("./posting");
 const commentRoutes = require("./comment");
 
-app.use("/user", userRoutes);
+app.use("/", userRoutes);
 app.use("/posting", postingRoutes);
 app.use("/comment", commentRoutes);
 
