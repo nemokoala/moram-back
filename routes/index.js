@@ -4,17 +4,22 @@ const cors = require("cors");
 const app = express();
 const PORT = 8000;
 const openai = require("../config/chatgpt");
-
+const ejs = require("ejs");
+const path = require("path");
 const userRoutes = require("./user");
 const postingRoutes = require("./posting");
 const commentRoutes = require("./comment");
 
-app.use("/", userRoutes);
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "../views"));
+
+app.use("/user", userRoutes);
 app.use("/posting", postingRoutes);
 app.use("/comment", commentRoutes);
 
 app.use(express.json());
 app.use(cors());
+
 app.get("/hi", (req, res) => {
   res.status(200).send(`hello`);
 });
