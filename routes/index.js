@@ -1,3 +1,5 @@
+const dotenv = require("dotenv");
+dotenv.config();
 const express = require("express");
 const db = require("../config/db");
 const cors = require("cors");
@@ -6,6 +8,7 @@ const PORT = 8000;
 const openai = require("../config/chatgpt");
 const ejs = require("ejs");
 const path = require("path");
+
 const userRoutes = require("./user");
 const postingRoutes = require("./posting");
 const commentRoutes = require("./comment");
@@ -85,6 +88,11 @@ app.post("/chat", async (req, res) => {
   } catch (error) {
     console.error("Error fetching response:", error);
   }
+});
+
+app.get("/test", (req, res) => {
+  console.log(process.env.PORT);
+  console.log(process.env.KAKAO_ID);
 });
 
 app.listen(PORT, () => {
