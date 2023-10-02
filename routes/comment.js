@@ -9,7 +9,9 @@ router.use(bodyParser.urlencoded({ extended: false }));
 router.get("/", async (req, res) => {
   //댓글 모든 내용 불러오기
   try {
-    const [results] = await db.query("SELECT * FROM comments");
+    const [results] = await db.query(
+      "SELECT nickname, content, writeTime FROM comments"
+    );
     res.json(results);
   } catch (error) {
     res.status(500).json({ message: "Server Error" });
@@ -26,7 +28,6 @@ function wTime() {
   var minutes = ("0" + today.getMinutes()).slice(-2);
   var seconds = ("0" + today.getSeconds()).slice(-2);
 
-  // YYYY-MM-DD HH:MM:SS 형식으로 반환
   return (
     year +
     "-" +
@@ -43,20 +44,32 @@ function wTime() {
 }
 
 router.post("/add", async (req, res) => {
-  // 댓글 추가
+  //댓글 추가 기능
   const writeTime = wTime();
   const { nickname, content } = req.body;
-
   try {
     const [results] = await db.query(
       "INSERT INTO comments ( nickname, content, writeTime) VALUES (?, ?, ?)",
       [nickname, content, writeTime]
     );
-    res.status(200).send("댓글을 성공적으로 작성하였습니다.");
+
+    res.status(200).json({
+      message: "댓글이 성공적으로 작성되었습니다.",
+      comment: {
+        nickname,
+        content,
+        writeTime,
+      },
+    });
   } catch (error) {
     res.status(500).json({ message: "Server Error" });
     console.error(error);
   }
+});
+
+router.post("/:id", async (req, res) => {
+  // 댓글 삭제 기능
+  const { id } = req.params;
 });
 
 module.exports = router;
