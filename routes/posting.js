@@ -2,10 +2,13 @@ const express = require("express");
 const router = express.Router();
 const db = require("../config/db");
 
-// 모든 게시글 조회
+// 과 게시글 조회
 router.get("/", async (req, res) => {
   try {
-    const [results] = await db.query("SELECT * FROM postings");
+    const [results] = await db.query(
+      "SELECT id, title, nickname, writeTime, hitCount, likesCount FROM postings where postings.category = ? ",
+      [req.query.category]
+      );
     res.json(results);
   } catch (error) {
     res.status(500).json({ message: "Server Error" });
@@ -14,10 +17,13 @@ router.get("/", async (req, res) => {
 });
 
 // 특정 게시글 조회
-router.get("/posting/:id", async (req, res) => {
+router.get("/:id", async (req, res) => {
   try {
-    const [results] = await db.query("SELECT * FROM postings WHERE id = ?", [req.params.id]);
-    
+    const [results] = await db.query(
+      "SELECT userId,nickname ,writeTime ,updateTime,title,content,img1Url,img2Url,img3Url,\
+    likesCount,hitCount ,category ,tag FROM postings WHERE id = ?", 
+    [req.params.id]
+    );
     if (results.length === 0) {
       return res.status(404).json({ message: "게시물을 찾을 수 없습니다." });
     }
@@ -40,7 +46,7 @@ router.post("/add", async (req, res) => {
     const [results] = await db.query(
       "INSERT INTO postings(userId,nickname ,writeTime ,updateTime,title,content,img1Url,img2Url,img3Url,\
         likesCount,hitCount ,category ,tag ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
-      [userId,nickname ,writeTime ,updateTime,title,content,img1Url,img2Url,img3Url,\
+      [userId,nickname ,writeTime ,updateTime,title,content,img1Url,img2Url,img3Url,
         likesCount,hitCount ,category ,tag ]
     );
     
@@ -62,7 +68,7 @@ router.put("/update/:id", async (req, res) => {
     const [results] = await db.query(
       "UPDATE postings SET userId=?, nickname=?, writeTime=?, updateTime=?, title=?, content=?, img1Url=?, img2Url=?, img3Url=?,\
         likesCount=? ,hitCount=? ,category=? ,tag=? WHERE id = ?",
-      [userId,nickname ,writeTime ,updateTime,title,content,img1Url,img2Url,img3Url,\
+      [userId,nickname ,writeTime ,updateTime,title,content,img1Url,img2Url,img3Url,
         likesCount,hitCount ,category ,tag, req.params.id]
     );
     
