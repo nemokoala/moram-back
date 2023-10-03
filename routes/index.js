@@ -8,7 +8,8 @@ const PORT = 8000;
 const openai = require("../config/chatgpt");
 const ejs = require("ejs");
 const path = require("path");
-
+const passport = require("../config/passport");
+const session = require("express-session");
 const userRoutes = require("./user");
 const postingRoutes = require("./posting");
 const commentRoutes = require("./comment");
@@ -16,10 +17,14 @@ const commentRoutes = require("./comment");
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "../views"));
 
+app.use(session({ secret: process.env.SECRET_KEY }));
+app.use(passport.initialize());
+app.use(passport.session());
 app.use("/user", userRoutes);
 app.use("/posting", postingRoutes);
 app.use("/comment", commentRoutes);
 
+app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 app.use(cors());
 
@@ -88,11 +93,6 @@ app.post("/chat", async (req, res) => {
   } catch (error) {
     console.error("Error fetching response:", error);
   }
-});
-
-app.get("/test", (req, res) => {
-  console.log(process.env.PORT);
-  console.log(process.env.KAKAO_ID);
 });
 
 app.listen(PORT, () => {

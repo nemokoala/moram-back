@@ -1,5 +1,3 @@
-const dotenv = require("dotenv");
-dotenv.config();
 const express = require("express");
 const router = express.Router();
 const db = require("../config/db");
@@ -8,11 +6,9 @@ const session = require("express-session");
 const ejs = require("ejs");
 const passport = require("../config/passport");
 
-router.use(session({ secret: process.env.SECRET_KEY }));
 router.use(express.urlencoded({ extended: false }));
 router.use(express.json());
-router.use(passport.initialize());
-router.use(passport.session());
+
 const requireLogin = (req, res, next) => {
   if (req.session.user) {
     next();
@@ -158,10 +154,24 @@ router.get("/logout", (req, res) => {
 });
 
 router.get("/check", (req, res) => {
-  console.log(req.session.user);
+  console.log(req.session.passport);
 });
 
 router.get("/test", (req, res) => {
   console.log(process.env.KAKAO_ID);
+});
+
+router.get("/kakao", passport.authenticate("kakao"));
+
+router.get(
+  "/kakao/callback",
+  passport.authenticate("kakao", { failureRedirect: "/user" }),
+  (req, res) => {
+    res.redirect("/user/success");
+  }
+);
+
+router.get("/success", (req, res) => {
+  res.send("success");
 });
 module.exports = router;
