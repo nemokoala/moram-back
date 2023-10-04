@@ -1,4 +1,4 @@
 /node_modules
 .env
 /views
-package-lock.json
+/package-lock.json
