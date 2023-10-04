@@ -2,9 +2,15 @@ const express = require("express");
 const router = express.Router();
 const db = require("../config/db");
 const bodyParser = require("body-parser");
-
+const passport = require("../config/passport");
+const { isloggedin, isnotloggedin } = require("../config/middleware");
 router.use(bodyParser.json());
 router.use(bodyParser.urlencoded({ extended: false }));
+
+router.get("/test", (req, res) => {
+  res.send("test");
+  console.log(req.session.passport);
+});
 
 router.get("/", async (req, res) => {
   //댓글 모든 내용 불러오기
