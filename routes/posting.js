@@ -1,7 +1,12 @@
 const express = require("express");
 const router = express.Router();
 const db = require("../config/db");
-const user = req.session.passport;
+const { isLoggedIn } = require('../config/middleware');
+
+router.get("/test", (req, res) => {
+  res.send("test");
+  console.log(req.session.passport);
+});
 
 // 과 게시글 조회
 router.get("/", async (req, res) => {
@@ -33,15 +38,17 @@ router.get("/:id", async (req, res) => {
 });
 
 // 새로운 게시글 추가 
-router.post("/add", async (req, res) => {
-  const { userId, nickname, writeTime, updateTime,
-          title,content,img1Url,img2Url,img3Url,
-          likesCount,hitCount ,category ,tag } = req.body;
-  
+router.post("/add", isLoggedIn , async (req, res) => {
+  const { title,content,img1Url,img2Url,img3Url,
+          category ,tag } = req.body;
+
+  // 여기서 세션으로부터 userId와 nickname을 가져옵니다.
+  const { userId, nickname } = req.session.passport.user;
+
   try {
-    const addSql ="INSERT INTO postings userId=?, nickname=?, writeTime=?, updateTime=?, title=?, content=?, img1Url=?, img2Url=?, img3Url=?,\
-    category=? ,tag=? WHERE id = ?"
-    const [results] = await db.query( addSql, [userId,nickname ,writeTime ,updateTime,title,content,img1Url,img2Url,img3Url,category ,tag ]);
+    const addSql ="INSERT INTO postings (userId,nickname ,writeTime ,updateTime,title,content,img1Url,img2Url,img3Url,\
+      category ,tag) VALUES (?, ?, NOW(), NOW(), ?, ?, ?, ?, ?, ?, ?)"
+    const [results] = await db.query( addSql, [userId,nickname,title,content,img1Url,img2Url,img3Url,category ,tag]);
     res.status(201).json({ message: "게시물 작성이 완료되었습니다." });
     
   } catch (error) {
@@ -50,8 +57,9 @@ router.post("/add", async (req, res) => {
   }
 });
 
+
 // 특정 게시글 업데이트
-router.put("/update/:id", async (req, res) => {
+router.put("/update/:id", isLoggedIn , async (req, res) => {
   const { userId, nickname, writeTime, updateTime,
           title,content,img1Url,img2Url,img3Url,
           likesCount,hitCount ,category ,tag } = req.body;
@@ -75,7 +83,7 @@ router.put("/update/:id", async (req, res) => {
 });
 
 // 특정 게시글 삭제 //user 인증 기능 하면 추가.
-router.delete("/delete/:id", async(req,res)=>{
+router.delete("/delete/:id", isLoggedIn , async(req,res)=>{
    try {
      const deleteSql = "DELETE FROM postings WHERE id = ?"
      const [results] = await db.query( deleteSql, [req.params.id]);
