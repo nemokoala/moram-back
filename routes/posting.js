@@ -1,7 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const db = require("../config/db");
-const { isLoggedIn } = require('../config/middleware');
+const passport = require("../config/passport");
+const { isLoggedIn } = require("../config/middleware");
 
 router.get("/test", (req, res) => {
   res.send("test");
