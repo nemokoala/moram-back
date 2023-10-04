@@ -47,6 +47,7 @@ router.post("/add", async (req, res) => {
   //댓글 추가 기능
   const writeTime = wTime();
   const { nickname, content } = req.body;
+  console.log(req.body);
   try {
     const [results] = await db.query(
       "INSERT INTO comments ( nickname, content, writeTime) VALUES (?, ?, ?)",
@@ -69,19 +70,20 @@ router.post("/add", async (req, res) => {
 
 router.delete("/:id", async (req, res) => {
   // 댓글 삭제 기능
-  const { id } = req.params;
-  const userNickname = req.headers["user-nickname"]; //클라이언트에서 헤더에 유저닉네임을 전달
+  const id = req.params.id;
+  const userNickname = req.body.nickname;
 
   try {
     const [comments] = await db.query("SELECT * FROM comments WHERE id = ?", [
       id,
     ]);
+    console.log(comments);
     if (comments.length === 0) {
       res.status(404).send("해당하는 댓글이 더 이상 존재하지 않습니다.");
       return;
     }
 
-    //해당 댓글id에 해당하는 댓글, 게시글 작성자 nickname 가져오기
+    //해당 댓글id에 해당하는 댓글 작성자, 게시글 작성자 nickname 가져오기
     const [possiblNicknames] = await db.query(
       `SELECT comments.nickname AS commentNickname, postings.nickname AS postNickname 
        FROM comments 
@@ -89,9 +91,10 @@ router.delete("/:id", async (req, res) => {
        WHERE comments.id = ?`,
       [id]
     );
+    console.log(possiblNicknames);
 
     if (!possiblNicknames || possiblNicknames.length === 0) {
-      res.status(500).send("서버 에러");
+      res.status(500).send("서버 에러1");
       return;
     }
 
@@ -105,7 +108,7 @@ router.delete("/:id", async (req, res) => {
       res.status(403).send("댓글을 삭제할 권한이 존재하지 않습니다");
     }
   } catch (error) {
-    res.status(500).json({ message: error.message || "서버 에러" });
+    res.status(500).json({ message: error.message || "서버 에러2" });
     console.error(error);
   }
 });

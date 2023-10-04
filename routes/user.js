@@ -3,7 +3,7 @@ const router = express.Router();
 const db = require("../config/db");
 const bcrypt = require("bcrypt");
 const session = require("express-session");
-const ejs = require("ejs");
+//const ejs = require("ejs");
 const passport = require("../config/passport");
 
 router.use(express.urlencoded({ extended: false }));

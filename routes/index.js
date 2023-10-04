@@ -18,7 +18,13 @@ const { authenticateUser } = require("../config/middleware");
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "../views"));
 
-app.use(session({ secret: process.env.SECRET_KEY }));
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET_KEY,
+    resave: false,
+    saveUninitialized: true,
+  })
+);
 app.use(passport.initialize());
 app.use(passport.session());
 app.use("/user", userRoutes);
@@ -39,7 +45,7 @@ app.post("/data", (req, res) => {
   res.status(200).send(`id:${id}, password:${password}`);
 });
 
-app.post("/chat", authenticateUser(), async (req, res) => {
+app.post("/chat", async (req, res) => {
   const { content } = req.body;
   const user = req.user;
   if (user.gptCount <= 0)
