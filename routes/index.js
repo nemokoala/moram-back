@@ -26,7 +26,6 @@ app.post("/data", (req, res) => {
   res.status(200).send(`id:${id}, password:${password}`);
 });
 
-
 app.post("/chat", authenticateUser(), async (req, res) => {
   const { content } = req.body;
   const user = req.user;
