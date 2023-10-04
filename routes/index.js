@@ -26,30 +26,6 @@ app.post("/data", (req, res) => {
   res.status(200).send(`id:${id}, password:${password}`);
 });
 
-app.get("/posting/all", async (req, res) => {
-  try {
-    const [results, fields] = await db.query("select * from posting");
-    res.send(results);
-    console.log(results);
-  } catch (error) {
-    console.error(error);
-    res.status(500).send("db 오류 발생.");
-  }
-});
-
-app.post("/posting/add", async (req, res) => {
-  const { title, content } = req.body;
-  try {
-    const [results] = await db.query(
-      "INSERT INTO posting (title, content) VALUES (?, ?)",
-      [title, content]
-    );
-    res.status(200).send("게시물을 성공적으로 작성했습니다.");
-  } catch (error) {
-    console.error(error);
-    res.status(500).send("db 오류 발생.");
-  }
-});
 
 app.post("/chat", authenticateUser(), async (req, res) => {
   const { content } = req.body;
@@ -99,6 +75,3 @@ app.post("/chat", authenticateUser(), async (req, res) => {
 app.listen(PORT, () => {
   console.log("Server is running");
 });
-
-//테스트
-//lyej
