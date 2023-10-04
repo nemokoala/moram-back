@@ -1,21 +1,34 @@
+const dotenv = require("dotenv");
+dotenv.config();
 const express = require("express");
 const db = require("../config/db");
 const cors = require("cors");
 const app = express();
 const PORT = 8000;
 const openai = require("../config/chatgpt");
-
+const ejs = require("ejs");
+const path = require("path");
+const passport = require("../config/passport");
+const session = require("express-session");
 const userRoutes = require("./user");
 const postingRoutes = require("./posting");
 const commentRoutes = require("./comment");
 const { authenticateUser } = require("../config/middleware");
 
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "../views"));
+
+app.use(session({ secret: process.env.SECRET_KEY }));
+app.use(passport.initialize());
+app.use(passport.session());
 app.use("/user", userRoutes);
 app.use("/posting", postingRoutes);
 app.use("/comment", commentRoutes);
 
+app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 app.use(cors());
+
 app.get("/hi", (req, res) => {
   res.status(200).send(`hello`);
 });
