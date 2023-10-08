@@ -3,10 +3,10 @@ const router = express.Router();
 const db = require("../config/db");
 const bcrypt = require("bcrypt");
 const session = require("express-session");
-//const ejs = require("ejs");
+const ejs = require("ejs");
 const passport = require("../config/passport");
-
-router.use(express.urlencoded({ extended: false }));
+const smtpTransport = require("../config/email");
+router.use(express.urlencoded({ extended: true }));
 router.use(express.json());
 
 const requireLogin = (req, res, next) => {
@@ -16,10 +16,10 @@ const requireLogin = (req, res, next) => {
     res.redirect("/login");
   }
 };
-const validateUserId = (userid) => {
-  const useridRegex = /^[a-zA-Z0-9]{4,10}$/;
-  return useridRegex.test(userid);
-};
+// const validateUserId = (userid) => {
+//   const useridRegex = /^[a-zA-Z0-9]{4,10}$/;
+//   return useridRegex.test(userid);
+// };
 
 const validateEmail = (email) => {
   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -48,28 +48,27 @@ router.get("/register", (req, res) => {
 
 router.post("/register", async (req, res) => {
   console.log(req.body);
-  const { userid, email, password } = req.body;
-
-  if (!validateUserId(userid)) {
-    return res.status(400).send("Invalid userid.");
+  const { email, password } = req.body;
+  if (!req.session.email) {
+    return res.status(400).send("이메일 인증을 해주세요.");
   }
   if (!validateEmail(email)) {
-    return res.status(400).send("Invalid email.");
+    return res.status(400).send("유효한 형식의 이메일이 아닙니다.");
   }
   if (!validatePassword(password)) {
-    return res.status(400).send("Invalid password.");
+    return res.status(400).send("유효한 형식의 비밀번호가 아닙니다.");
   }
 
   try {
-    const userSql = "SELECT * FROM users WHERE userid = ? OR email = ?";
-    const [users] = await db.query(userSql, [userid, email]);
+    const usersql = "SELECT * FROM users WHERE email = ?";
+    const [users] = await db.query(usersql, [email]);
     if (users.length > 0) {
-      return res.status(400).send("Userid or Email already exists");
+      return res.status(400).send("이메일이 이미 존재합니다.");
     }
 
-    const sql = `INSERT INTO users (userid, email, password) VALUES (?, ?, ?)`;
+    const sql = `INSERT INTO users (platformType, email, password) VALUES (?, ?, ?)`;
     hash = await bcrypt.hash(password, 12);
-    await db.query(sql, [userid, email, hash]);
+    await db.query(sql, ["local", email, hash]);
     res.status(200).send("회원가입 성공");
   } catch (err) {
     console.log(err);
@@ -113,41 +112,95 @@ router.post("/login", (req, res, next) => {
   })(req, res, next); //! 미들웨어 내의 미들웨어에는 콜백을 실행시키기위해 (req, res, next)를 붙인다.
 });
 
-// router.post(
-//   "/login",
-//   passport.authenticate("local", {
-//     successRedirect: "/user",
-//     failureRedirect: "/user/login",
-//     failWithError: true,
-//   })
-// );
+router.post("/mailsend", async (req, res, next) => {
+  console.log("메일 전송");
+  console.log(req.body);
+  console.log(1);
+  try {
+    //랜덤 인증 코드 생성
+    const authcode = Math.floor(100000 + Math.random() * 900000).toString();
+    let transporter = smtpTransport;
+    //메일 설정
+    const { email } = req.body;
+    if (!validateEmail(email)) {
+      return res.status(403).send("유효한 형식의 이메일이 아닙니다.");
+    }
+    let mailOptions = {
+      from: "c1004sos@1gmail.com", //송신할 이메일
+      to: email, //수신할 이메일
+      subject: "[모람모람]인증 관련 이메일 입니다",
+      text: `오른쪽 숫자 6자리를 입력해주세요 : ${authcode}`,
+    };
+    console.log(mailOptions);
+    await transporter.sendMail(mailOptions);
+    console.log("메일 발송 성공");
 
-router.use((err, req, res, next) => {
-  if (req.authErr) {
-    return res.status(401).send("로그인실패");
+    //db에 인증 정보 저장 (이메일, 인증코드, 만료시간)
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+    const sql = `INSERT INTO emailVerification (email, authcode, expiresAt) VALUES (?, ?, ?)`;
+    db.query(sql, [email, authcode, expiresAt]);
+
+    res.status(200).send("메일발신성공");
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("서버에러");
+    next(err);
   }
-  next(err);
 });
-// router.post("/login", async (req, res) => {
-//   const { email, password } = req.body;
-//   const sql = `SELECT * FROM users WHERE email = ?`;
+
+router.post("/mailverify", async (req, res, next) => {
+  try {
+    const { email, authcode } = req.body;
+    console.log(authcode);
+    const sql = `SELECT * FROM emailVerification WHERE email = ? AND authcode = ? AND expiresAt > NOW()`;
+    const [result] = await db.query(sql, [email, authcode]);
+    if (result.length === 0) {
+      return res.status(400).send("인증코드가 일치하지 않습니다.");
+    }
+    req.session.email = email;
+    res.status(200).send("인증코드가 일치합니다.");
+  } catch (err) {
+    console.log(err);
+    return res.status(500).send("서버에러");
+  }
+});
+
+// router.post("/mailsend", async (req, res, next) => {
+//   console.log("메일 전송");
+//   console.log(req.body);
+//   console.log(1);
 //   try {
-//     const [result] = await db.query(sql, [email]);
-//     if (result.length === 0) {
-//       res.status(400).send("가입되지 않은 이메일입니다.");
-//     } else {
-//       const compare = await bcrypt.compare(password, result[0].password);
-//       if (compare) {
-//         req.session.user = result[0].userid;
-//         res.status(200).send("로그인 성공");
-//       } else {
-//         res.status(400).send("비밀번호가 틀렸습니다.");
-//       }
-//     }
+//     //랜덤 인증 코드 생성
+//     const authcode = Math.floor(100000 + Math.random() * 900000).toString();
+//     let transporter = smtpTransport;
+//     //메일 설정
+//     const { email } = req.body;
+//     let mailOptions = {
+//       from: "c1004sos@1gmail.com", //송신할 이메일
+//       to: email, //수신할 이메일
+//       subject: "[모람모람]인증 관련 이메일 입니다",
+//       text: `오른쪽 숫자 6자리를 입력해주세요 : ${authcode}`,
+//     };
+//     console.log(mailOptions);
+//     await transporter
+//       .sendMail(mailOptions)
+//       .then(() => res.status(200).send("메일발신성공"))
+//       .then(() => {
+//         const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+//         const sql = `INSERT INTO emailVerification (email, authcode, expiresAt) VALUES (?, ?, ?))`;
+//         db.query(sql, [email, authcode, expiresAt])
+//       })
+//       .catch(() => res.status(500).send("에러"));
 //   } catch (err) {
-//     console.log(err);
+//     console.error(err);
+//     next(err);
 //   }
 // });
+
+router.use((err, req, res, next) => {
+  console.error(err.stack); // 에러 스택 출력
+  res.status(500).send("서버 에러");
+});
 
 router.get("/logout", (req, res) => {
   req.logout();
@@ -172,6 +225,6 @@ router.get(
 );
 
 router.get("/success", (req, res) => {
-  res.send("success");
+  res.send("로그인성공");
 });
 module.exports = router;
