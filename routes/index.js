@@ -13,6 +13,7 @@ const session = require("express-session");
 const userRoutes = require("./user");
 const postingRoutes = require("./posting");
 const commentRoutes = require("./comment");
+const adminRoutes = require("./admin");
 const { authenticateUser } = require("../config/middleware");
 
 app.set("view engine", "ejs");
@@ -30,6 +31,7 @@ app.use(passport.session());
 app.use("/user", userRoutes);
 app.use("/posting", postingRoutes);
 app.use("/comment", commentRoutes);
+app.use("/admin", adminRoutes);
 
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
