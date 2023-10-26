@@ -30,6 +30,7 @@ app.use(passport.session());
 app.use("/user", userRoutes);
 app.use("/posting", postingRoutes);
 app.use("/comment", commentRoutes);
+app.use("/like", likeRoutes);
 
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
