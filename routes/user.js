@@ -157,6 +157,7 @@ router.post("/mailverify", async (req, res, next) => {
     if (result.length === 0) {
       return res.status(400).send("인증코드가 일치하지 않습니다.");
     }
+    //만약 인증코드가 일치하다면, 세션에 이메일 저장
     req.session.email = email;
     res.status(200).send("인증코드가 일치합니다.");
   } catch (err) {
@@ -165,37 +166,14 @@ router.post("/mailverify", async (req, res, next) => {
   }
 });
 
-// router.post("/mailsend", async (req, res, next) => {
-//   console.log("메일 전송");
-//   console.log(req.body);
-//   console.log(1);
-//   try {
-//     //랜덤 인증 코드 생성
-//     const authcode = Math.floor(100000 + Math.random() * 900000).toString();
-//     let transporter = smtpTransport;
-//     //메일 설정
-//     const { email } = req.body;
-//     let mailOptions = {
-//       from: "c1004sos@1gmail.com", //송신할 이메일
-//       to: email, //수신할 이메일
-//       subject: "[모람모람]인증 관련 이메일 입니다",
-//       text: `오른쪽 숫자 6자리를 입력해주세요 : ${authcode}`,
-//     };
-//     console.log(mailOptions);
-//     await transporter
-//       .sendMail(mailOptions)
-//       .then(() => res.status(200).send("메일발신성공"))
-//       .then(() => {
-//         const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
-//         const sql = `INSERT INTO emailVerification (email, authcode, expiresAt) VALUES (?, ?, ?))`;
-//         db.query(sql, [email, authcode, expiresAt])
-//       })
-//       .catch(() => res.status(500).send("에러"));
-//   } catch (err) {
-//     console.error(err);
-//     next(err);
-//   }
-// });
+router.get("/forgotpassword", (req, res) => {
+  res.render("forgotPassword");
+});
+
+router.post("/forgotpassword", async (req, res) => {
+  console.log(req.body);
+  email = req.body.email;
+});
 
 router.use((err, req, res, next) => {
   console.error(err.stack); // 에러 스택 출력
