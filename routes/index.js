@@ -14,7 +14,12 @@ const userRoutes = require("./user");
 const postingRoutes = require("./posting");
 const commentRoutes = require("./comment");
 const { authenticateUser } = require("../config/middleware");
-
+app.use(
+  cors({
+    origin: true,
+    credentials: true,
+  })
+);
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "../views"));
 
@@ -33,7 +38,6 @@ app.use("/comment", commentRoutes);
 
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
-app.use(cors());
 
 app.get("/hi", (req, res) => {
   res.status(200).send(`hello`);
