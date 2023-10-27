@@ -43,22 +43,26 @@ router.get("/", async (req, res) => {
 });
 
 router.get("/register", (req, res) => {
-  res.render("register");
+  res.send("register");
 });
 
 router.post("/register", async (req, res) => {
   console.log(req.body);
   const { email, password } = req.body;
+  console.log("회원가입중1------");
+  console.log(email, password);
+  console.log("--------------------");
   if (!req.session.email) {
     return res.status(400).send("이메일 인증을 해주세요.");
   }
+  console.log("회원가입중2");
   if (!validateEmail(email)) {
     return res.status(400).send("유효한 형식의 이메일이 아닙니다.");
   }
   if (!validatePassword(password)) {
     return res.status(400).send("유효한 형식의 비밀번호가 아닙니다.");
   }
-
+  console.log("회원가입중");
   try {
     const usersql = "SELECT * FROM users WHERE email = ?";
     const [users] = await db.query(usersql, [email]);
@@ -167,7 +171,7 @@ router.post("/mailverify", async (req, res, next) => {
 });
 
 router.get("/forgotpassword", (req, res) => {
-  res.render("forgotPassword");
+  res.send("forgotPassword");
 });
 
 router.post("/forgotpassword", async (req, res) => {

@@ -69,18 +69,26 @@
           });
       });
 
-      $("#signupForm").on("submit", function (event) {
-        var Email = $("#email").val();
-        var Password = $("#password").val();
+      document
+        .getElementById("signupForm")
+        .addEventListener("submit", function (e) {
+          e.preventDefault(); // 폼 제출 기본 동작 방지
 
-        $.post("/user/register", { email: Email, password: Password })
-          .done(function (data) {
-            alert("회원가입에 성공했습니다.");
-          })
-          .fail(function (err) {
-            alert("오류 발생");
-          });
-      });
+          // verificationForm의 email 값을 가져오기
+          const email =
+            document.getElementById("verificationForm").elements.email.value;
+
+          // email 값을 signupForm의 hidden 필드에 설정
+          document
+            .getElementById("signupForm")
+            .insertAdjacentHTML(
+              "beforeend",
+              `<input type="hidden" name="email" value="${email}" />`
+            );
+
+          // signupForm 제출
+          this.submit();
+        });
     </script>
   </body>
 </html>
