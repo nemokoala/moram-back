@@ -80,10 +80,6 @@ router.post("/register", async (req, res) => {
   }
 });
 
-router.get("/login", (req, res) => {
-  res.render("login");
-});
-
 router.post("/login", (req, res, next) => {
   //? local로 실행이 되면 localstrategy.js를 찾아 실행한다.
   passport.authenticate("local", (authError, user, info) => {
@@ -111,7 +107,7 @@ router.post("/login", (req, res, next) => {
         return next(loginError);
       }
       // done(null, user)로 로직이 성공적이라면, 세션에 사용자 정보를 저장해놔서 로그인 상태가 된다.
-      return res.redirect("/");
+      return res.json({ message: "로그인 성공", content: user });
     });
   })(req, res, next); //! 미들웨어 내의 미들웨어에는 콜백을 실행시키기위해 (req, res, next)를 붙인다.
 });
@@ -189,7 +185,9 @@ router.get("/logout", (req, res) => {
 });
 
 router.get("/check", (req, res) => {
-  console.log(req.session.passport);
+  const user = req.session.passport;
+  console.log("user -> ", user);
+  res.send(user);
 });
 
 router.get("/test", (req, res) => {
@@ -202,11 +200,15 @@ router.get(
   "/kakao/callback",
   passport.authenticate("kakao", { failureRedirect: "/user" }),
   (req, res) => {
-    res.redirect("/user/success");
+    console.log("유저정보: ", req.user);
+    res.redirect(
+      "http://localhost:3000/login-success?user=" +
+        JSON.stringify({
+          email: req.user[0].email,
+          nickname: req.user[0].nickname,
+        })
+    );
   }
 );
 
-router.get("/success", (req, res) => {
-  res.send("로그인성공");
-});
 module.exports = router;
