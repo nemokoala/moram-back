@@ -48,6 +48,6 @@ exports.generatePassword = async () => {
     .split("")
     .sort(() => Math.random() - 0.5)
     .join("");
-  password = await bcrypt.hash(password, 12);
+
   return password;
 };
