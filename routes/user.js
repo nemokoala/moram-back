@@ -2,10 +2,12 @@ const express = require("express");
 const router = express.Router();
 const db = require("../config/db");
 const bcrypt = require("bcrypt");
+const crypto = require("crypto");
 const session = require("express-session");
 const ejs = require("ejs");
 const passport = require("../config/passport");
 const smtpTransport = require("../config/email");
+const { generatePassword } = require("../config/middleware");
 router.use(express.urlencoded({ extended: true }));
 router.use(express.json());
 
@@ -43,12 +45,24 @@ router.get("/", async (req, res) => {
 });
 
 router.get("/register", (req, res) => {
-  res.send("register");
+  res.render("register");
 });
 
 router.post("/register", async (req, res) => {
   console.log(req.body);
-  const { email, password } = req.body;
+  const { nickname, email, password } = req.body;
+
+  try {
+    const sql = "SELECT * FROM users WHERE nickname = ?";
+    const [user] = await db.query(sql, [nickname]);
+    if (user.length > 0) {
+      return res.status(400).send("닉네임이 이미 존재합니다.");
+    }
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("서버에러");
+  }
+
   console.log("회원가입중1------");
   console.log(email, password);
   console.log("--------------------");
@@ -70,9 +84,9 @@ router.post("/register", async (req, res) => {
       return res.status(400).send("이메일이 이미 존재합니다.");
     }
 
-    const sql = `INSERT INTO users (platformType, email, password) VALUES (?, ?, ?)`;
+    const sql = `INSERT INTO users (platformType, nickname, email, password) VALUES (?, ?, ?, ?)`;
     hash = await bcrypt.hash(password, 12);
-    await db.query(sql, ["local", email, hash]);
+    await db.query(sql, ["local", nickname, email, hash]);
     res.status(200).send("회원가입 성공");
   } catch (err) {
     console.log(err);
@@ -110,6 +124,21 @@ router.post("/login", (req, res, next) => {
       return res.json({ message: "로그인 성공", content: user });
     });
   })(req, res, next); //! 미들웨어 내의 미들웨어에는 콜백을 실행시키기위해 (req, res, next)를 붙인다.
+});
+
+router.post("/validatenickname", async (req, res, next) => {
+  try {
+    const { nickname } = req.body;
+    const sql = "SELECT * FROM users WHERE nickname = ?";
+    const [user] = await db.query(sql, [nickname]);
+    if (user.length > 0) {
+      return res.status(400).send("닉네임이 이미 존재합니다.");
+    }
+    res.status(200).send("사용가능한 닉네임입니다.");
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("서버에러");
+  }
 });
 
 router.post("/mailsend", async (req, res, next) => {
@@ -166,14 +195,164 @@ router.post("/mailverify", async (req, res, next) => {
   }
 });
 
-router.get("/forgotpassword", (req, res) => {
-  res.send("forgotPassword");
+router.get("/forgot", (req, res) => {
+  res.render("forgot");
 });
 
-router.post("/forgotpassword", async (req, res) => {
-  console.log(req.body);
-  email = req.body.email;
+router.post("/forgot", async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    const sql = `SELECT * FROM users WHERE email = ?`;
+    const mail = await db.query(sql, [email]);
+    if (mail.length === 0) {
+      return res.status(400).send("존재하지 않는 이메일입니다.");
+    }
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("서버에러");
+  }
+
+  const token = cryto.randomBytes(20).toString("hex");
+  const data = [mail[0].id, token, 300];
+
+  try {
+    //랜덤 비밀번호 생성
+    const newpassword = generatePassword();
+    let transporter = smtpTransport;
+    //메일 설정
+    const { email } = req.body;
+    if (!validateEmail(email)) {
+      return res.status(403).send("유효한 형식의 이메일이 아닙니다.");
+    }
+
+    let mailOptions = {
+      from: "c1004sos@1gmail.com", //송신할 이메일
+      to: email, //수신할 이메일
+      subject: "[모람모람]아이디/비밀번호 정보입니다.",
+      html: ` <div>
+      <p>요청한 계정 정보는 아래와 같습니다.</p>
+      <hr />
+      <ul>
+        <li>사이트 : https://www.moram.com</li>
+        <li>이메일 :</li>
+        <li>닉네임 :</li>
+        <li>비밀번호 :</li>
+      </ul>
+      <span>아래 링크를 클릭하면 위에 적힌 비밀번호로 변경됩니다.</span>
+      <p>로그인 후 다른 비밀번호로 변경해 주시기 바랍니다.</p>
+      <p>링크를 클릭하지 않으면 비밀번호가 변경되지 않습니다.</p>
+      <a
+        href="https://www.dogdrip.net/index.php?module=member&amp;act=procMemberAuthAccount&amp;member_srl=45717627&amp;auth_key=5d3d2b7800cdbc6f568b8d1603c08998bae5a47b"
+        rel="noreferrer noopener"
+        target="_blank"
+        >https://www.dogdrip.net/index.php?module=member&amp;act=procMemberAuthAccount&amp;member_srl=45717627&amp;auth_key=5d3d2b7800cdbc6f568b8d1603c08998bae5a47b</a
+      >
+    </div>`,
+    };
+    console.log(mailOptions);
+    await transporter.sendMail(mailOptions);
+    console.log("메일 발송 성공");
+
+    //db에 인증 정보 저장 (이메일, 인증코드, 만료시간)
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+    const sql = `INSERT INTO emailVerification (email, authcode, expiresAt) VALUES (?, ?, ?)`;
+
+    db.query(sql, [email, authcode, expiresAt]);
+
+    res.status(200).send("메일발신성공");
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("서버에러");
+    next(err);
+  }
 });
+
+router.post("/tete", async (req, res) => {
+  const { email } = req.body;
+  if (email === "") {
+    res.status(400).send("이메일을 입력해주세요.");
+  }
+
+  try {
+    const sql = `SELECT * FROM users WHERE email = ?`;
+    const result = await db.query(sql, email);
+    const user = result[0];
+    if (user.length === 0) {
+      return res.status(400).send("존재하지 않는 이메일입니다.");
+    }
+
+    const token = crypto.randomBytes(20).toString("hex");
+    const data = {
+      token,
+      mail: user[0].email,
+      ttl: new Date(Date.now() + 5 * 60 * 1000),
+    };
+    console.log(data);
+    const insertSql = `INSERT INTO pwdVerification (token, email, expiresAt) VALUES (?, ?, ?)`;
+    await db.query(insertSql, [data.token, data.mail, data.ttl]);
+    console.log(user);
+    let transporter = smtpTransport;
+    let mailOptions = {
+      from: "c1004sos@1gmail.com", //송신할 이메일
+      to: data.mail, //수신할 이메일
+      subject: "[모람모람]아이디/비밀번호 정보입니다.",
+      html: ` <div>
+      <p>요청한 계정 정보는 아래와 같습니다.</p>
+      <hr />
+      <ul>
+        <li>사이트 : https://www.moram.com</li>
+        <li>이메일 : ${user[0].email}</li>
+        <li>닉네임 : ${user[0].nickname}</li>
+        <li>비밀번호 :</li>
+      </ul>
+      <span>아래 링크를 클릭하면 위에 적힌 비밀번호로 변경됩니다.</span>
+      <p>로그인 후 다른 비밀번호로 변경해 주시기 바랍니다.</p>
+      <p>링크를 클릭하지 않으면 비밀번호가 변경되지 않습니다.</p>
+      <a
+        href="http://localhost:8000/user/reset/${token}"
+        rel="noreferrer noopener"
+        target="_blank"
+        >http://localhost:8000/user/reset/${token}</a
+      >
+    </div>`,
+    };
+    console.log(mailOptions);
+    await transporter.sendMail(mailOptions);
+    console.log("메일 발송 성공");
+
+    console.log(data);
+    res.send("메일발송성공");
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("서버에러");
+  }
+});
+
+router.get("/reset/:token", async (req, res) => {
+  const { token } = req.params;
+  const newpassword = await generatePassword();
+  console.log(newpassword);
+  try {
+    const sql = `SELECT * FROM pwdVerification WHERE token = ? AND expiresAt > NOW()`;
+    const [result] = await db.query(sql, [token]);
+
+    const updateSql = `UPDATE users SET password = ? WHERE email = ?`;
+    const [updateResult] = await db.query(updateSql, [
+      newpassword,
+      result[0].email,
+    ]);
+    console.log(result);
+
+    console.log(result[0]);
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("서버에러");
+  }
+});
+// const token = crypto.randomBytes(20).toString("hex");
+//     const data = { token, mail: user[0].email, ttl: 300 };
+router.post("/sendpassword", async (req, res) => {});
 
 router.use((err, req, res, next) => {
   console.error(err.stack); // 에러 스택 출력
