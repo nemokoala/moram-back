@@ -8,8 +8,9 @@ router.use(bodyParser.json());
 router.use(bodyParser.urlencoded({ extended: false }));
 
 // router.get("/test", (req, res) => {
-//   res.send("test");
-//   console.log(req.session.passport);
+//   // res.send("test");
+//   // console.log(req.session.passport);
+//   res.json(req.query.t);
 // });
 
 router.get("/:postId", async (req, res) => {
@@ -26,19 +27,18 @@ router.get("/:postId", async (req, res) => {
   }
 });
 
-router.post("/:postId/:parentId", isLoggedIn, async (req, res) => {
-  //댓글 추가 기능
-  const writeTime = new Date();
-  const content = req.body.content;
-  const postId = req.params.postId; //댓글 달려하는 포스팅 Id
-  const parentId = req.params.parentId; //대댓글 시 부모 Id
-  const userId = req.user[0].id;
-  const userNickname = req.user[0].nickname;
-
+router.post("/:postId", isLoggedIn, async (req, res) => {
   try {
+    const writeTime = new Date();
+    const content = req.body.content;
+    const postId = Number(req.params.postId); //해당 댓글의 포스팅 id
+    const parentId = Number(req.query.parentId) || null; //대댓글 시 부모 댓글 id
+    const userId = Number(req.user[0].id);
+    const userNickname = req.user[0].nickname;
+
     const addSql =
-      "INSERT INTO comments ( postId, userId, nickname, content, writeTime, parentId) VALUES (?, ?, ?, ?, ?, ?)";
-    const [results] = await db.query(addSql, [
+      "INSERT INTO comments ( userId, postId, nickname, content, writeTime, parentId) VALUES (?, ?, ?, ?, ?, ?)";
+    await db.query(addSql, [
       userId,
       postId,
       userNickname,
@@ -56,10 +56,12 @@ router.post("/:postId/:parentId", isLoggedIn, async (req, res) => {
       },
     });
   } catch (error) {
-    res.status(500).json({ message: "댓글 추가 서버에러" });
     console.error(error);
+    res.status(500).json({ message: "댓글 추가 서버에러" });
   }
 });
+// 댓글추가 : http://localhost:8000/comment/123
+//대댓글 추가 : http://localhost:8000/comment/123?parentId=456
 
 router.delete("/:id", isLoggedIn, async (req, res) => {
   // 댓글 삭제 기능
