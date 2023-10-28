@@ -198,13 +198,11 @@ router.post("/mailverify", async (req, res, next) => {
   }
 });
 
-router.get("/forgot", (req, res) => {
-  res.render("forgot");
-});
+// router.get("/forgot", (req, res) => {
+//   res.render("forgot");
+// });
 
-router.post("/forgot", async (req, res) => {});
-
-router.post("/tete", async (req, res) => {
+router.post("/forgot", async (req, res) => {
   const { email } = req.body;
   if (email === "") {
     res.status(400).send("이메일을 입력해주세요.");
