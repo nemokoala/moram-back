@@ -100,10 +100,6 @@ router.post("/register", async (req, res) => {
   }
 });
 
-router.get("/login", isNotLoggedIn, (req, res, next) => {
-  res.send("login");
-});
-
 router.post("/login", (req, res, next) => {
   //? local로 실행이 되면 localstrategy.js를 찾아 실행한다.
   passport.authenticate("local", (authError, user, info) => {

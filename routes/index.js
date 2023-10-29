@@ -14,7 +14,8 @@ const userRoutes = require("./user");
 const postingRoutes = require("./posting");
 const commentRoutes = require("./comment");
 const adminRoutes = require("./admin");
-const { authenticateUser } = require("../config/middleware");
+const likeRoutes = require("./like");
+const { authenticateUser, isAdmin } = require("../config/middleware");
 app.use(
   cors({
     origin: true,
@@ -37,7 +38,7 @@ app.use("/user", userRoutes);
 app.use("/posting", postingRoutes);
 app.use("/comment", commentRoutes);
 app.use("/like", likeRoutes);
-app.use("/admin", adminRoutes);
+app.use("/admin", isAdmin, adminRoutes);
 
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());

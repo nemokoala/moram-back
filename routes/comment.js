@@ -17,8 +17,7 @@ router.get("/:postId", async (req, res) => {
   //해당 게시물의 모든 댓글 내용 불러오기
   const postId = req.params.postId;
   try {
-    const allSql =
-      "SELECT nickname, content, writeTime FROM comments WHERE postId = ?";
+    const allSql = "SELECT * FROM comments WHERE postId = ?";
     const [results] = await db.query(allSql, [postId]);
     res.json(results);
   } catch (error) {
