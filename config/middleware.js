@@ -1,42 +1,4 @@
-// const jwt = require("jsonwebtoken");
-
-// module.exports.authenticateUser = async (req, res, next) => {
-//   const token = req.cookies.token || "";
-
-//   if (!token) return res.status(403).sned("토큰이 없습니다.");
-
-//   try {
-//     const payload = jwt.verify(token, process.env.SECRET_KEY);
-//     const userId = payload.id;
-
-//     const [results] = await db.query("SELECT * FROM user WHERE id = ?", [
-//       userId,
-//     ]);
-//     if (!result) return res.status(404).send("사용자를 찾을 수 없습니다.");
-//     req.user = results[0];
-//     next();
-//     //성공 시
-//   } catch (error) {
-//     if (error instanceof jwt.JsonWebTokenError) {
-//       res.status(500).send("토큰이 만료되었거나 유효하지 않습니다.");
-//     } else {
-//       res.status(500).send("서버 오류 발생.");
-//     }
-//   }
-// };
-
-/* 
-module.exports.authenticateUser = (req, res, next) => {
-  const userId = req.session.userId;
-
-  if (!userId) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
-
-  next();
-};
-*/
-
+const bcrypt = require("bcrypt");
 exports.isLoggedIn = (req, res, next) => {
   // isAuthenticated()로 검사해 로그인이 되어있으면
   if (req.isAuthenticated()) {
@@ -54,4 +16,38 @@ exports.isNotLoggedIn = (req, res, next) => {
     res.status(403).send("로그인한 상태입니다.");
     //res.redirect(`/?error=${message}`);
   }
+};
+
+exports.generatePassword = async () => {
+  const specialChars = "!@#$%^&*";
+  const numbers = "0123456789";
+  const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+  let password = "";
+
+  // 특수문자, 숫자, 영문자 각각 1개씩 랜덤하게 선택하여 비밀번호에 추가
+  password += specialChars[Math.floor(Math.random() * specialChars.length)];
+  password += numbers[Math.floor(Math.random() * numbers.length)];
+  password += letters[Math.floor(Math.random() * letters.length)];
+
+  // 나머지 자리를 랜덤하게 영문자, 숫자, 특수문자 중에서 선택하여 추가
+  for (let i = 0; i < 5; i++) {
+    const randomCharType = Math.floor(Math.random() * 3);
+
+    if (randomCharType === 0) {
+      password += letters[Math.floor(Math.random() * letters.length)];
+    } else if (randomCharType === 1) {
+      password += numbers[Math.floor(Math.random() * numbers.length)];
+    } else {
+      password += specialChars[Math.floor(Math.random() * specialChars.length)];
+    }
+  }
+
+  // 비밀번호를 랜덤하게 섞음
+  password = password
+    .split("")
+    .sort(() => Math.random() - 0.5)
+    .join("");
+
+  return password;
 };

@@ -10,16 +10,16 @@ passport.use(
   "local",
   new LocalStrategy(
     {
-      usernameField: "userid",
+      usernameField: "email",
       passwordField: "password",
       passReqToCallback: true,
     },
-    async (req, userid, password, done) => {
-      console.log("passport의 local-login : ", userid, password);
+    async (req, email, password, done) => {
+      console.log("passport의 local-login : ", email, password);
       let users;
       try {
-        sql = "SELECT * FROM users WHERE userid = ?";
-        [users] = await db.query(sql, [userid]);
+        sql = "SELECT * FROM users WHERE email = ?";
+        [users] = await db.query(sql, [email]);
       } catch (err) {
         console.log(err);
       }
@@ -54,7 +54,7 @@ passport.use(
       console.log("----passport.use 시작 ----");
       console.log(`----profile.id: ${profile._json.id} ----`);
       console.log(`----profile.platformType: ${profile.provider} ----`);
-      console.log(`----profile.userid: ${profile.username} ----`);
+      console.log(`----profile.nickname: ${profile.username} ----`);
       console.log(
         `----profile.email: ${profile._json.kakao_account.email} ----`
       );
@@ -78,7 +78,7 @@ passport.use(
           let results;
           try {
             [results] = await db.query(
-              "INSERT INTO users (_id, platformType, userid, email, password) VALUES (?, ?, ?, ?, ?)",
+              "INSERT INTO users (_id, platformType, nickname, email, password) VALUES (?, ?, ?, ?, ?)",
               [
                 profile._json.id,
                 "kakao",
