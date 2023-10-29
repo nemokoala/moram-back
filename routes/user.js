@@ -7,7 +7,13 @@ const session = require("express-session");
 const ejs = require("ejs");
 const passport = require("../config/passport");
 const smtpTransport = require("../config/email");
-const { generatePassword } = require("../config/middleware");
+const {
+  generatePassword,
+  isLoggedIn,
+  isNotLoggedIn,
+} = require("../config/middleware");
+const { isloggedin, isnotloggedin } = require("../config/middleware");
+const { type } = require("os");
 router.use(express.urlencoded({ extended: true }));
 router.use(express.json());
 
@@ -94,9 +100,9 @@ router.post("/register", async (req, res) => {
   }
 });
 
-// router.get("/login", (req, res) => {
-//   res.render("login");
-// });
+router.get("/login", isNotLoggedIn, (req, res, next) => {
+  res.send("login");
+});
 
 router.post("/login", (req, res, next) => {
   //? local로 실행이 되면 localstrategy.js를 찾아 실행한다.
@@ -158,6 +164,13 @@ router.post("/mailsend", async (req, res, next) => {
     if (!validateEmail(email)) {
       return res.status(403).send("유효한 형식의 이메일이 아닙니다.");
     }
+    const searchSql = `SELECT * FROM users WHERE email = ?`;
+    const [user] = await db.query(searchSql, [email]);
+
+    if (user.length > 0) {
+      return res.status(403).send("이미 존재하는 이메일입니다.");
+    }
+
     let mailOptions = {
       from: "c1004sos@1gmail.com", //송신할 이메일
       to: email, //수신할 이메일
@@ -198,9 +211,9 @@ router.post("/mailverify", async (req, res, next) => {
   }
 });
 
-// router.get("/forgot", (req, res) => {
-//   res.render("forgot");
-// });
+router.get("/forgot", (req, res) => {
+  res.send("forgot");
+});
 
 router.post("/forgot", async (req, res) => {
   const { email } = req.body;
@@ -294,13 +307,44 @@ router.get("/reset/:token", async (req, res) => {
 //     const data = { token, mail: user[0].email, ttl: 300 };
 router.post("/sendpassword", async (req, res) => {});
 
-router.use((err, req, res, next) => {
-  console.error(err.stack); // 에러 스택 출력
-  res.status(500).send("서버 에러");
+router.get("/logout", async (req, res, next) => {
+  req.logout((err) => {
+    if (err) {
+      return next(err);
+    } else {
+      console.log("로그아웃 성공");
+      res.redirect("/user");
+    }
+  });
+
+  router.use((err, req, res, next) => {
+    console.error(err.stack); // 에러 스택 출력
+    res.status(500).send("서버 에러");
+  });
+
+  // req.session.save(() => {
+  //   res.redirect("/");
+  // });
 });
 
-router.get("/logout", (req, res) => {
-  req.logout();
+router.post("/ex", async (req, res) => {
+  const { email } = req.body;
+  console.log(`req.body에 있는 email: ${email}`);
+  try {
+    sql = `SELECT * FROM users WHERE email = ?`;
+    const [user] = await db.query(sql, [email]);
+    console.log(`-----------user------------`);
+    console.log(user.length);
+    console.log(`-----------end------------`);
+    console.log(`-----------user[0]------------`);
+    //console.log(user[0].length);
+    console.log(`-----------end------------`);
+    if (user.length === 0) {
+      return res.status(400).send("존재하지 않는 이메일입니다.");
+    }
+  } catch (err) {
+    console.log(err);
+  }
 });
 
 router.get("/check", (req, res) => {
