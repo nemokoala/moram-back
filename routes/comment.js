@@ -3,118 +3,93 @@ const router = express.Router();
 const db = require("../config/db");
 const bodyParser = require("body-parser");
 const passport = require("../config/passport");
-const { isloggedin, isnotloggedin } = require("../config/middleware");
+const { isnotloggedin, isLoggedIn } = require("../config/middleware");
 router.use(bodyParser.json());
 router.use(bodyParser.urlencoded({ extended: false }));
 
-router.get("/test", (req, res) => {
-  res.send("test");
-  console.log(req.session.passport);
-});
+// router.get("/test", (req, res) => {
+//   // res.send("test");
+//   // console.log(req.session.passport);
+//   res.json(req.query.t);
+// });
 
-router.get("/", async (req, res) => {
-  //댓글 모든 내용 불러오기
+router.get("/:postId", async (req, res) => {
+  //해당 게시물의 모든 댓글 내용 불러오기
+  const postId = req.params.postId;
   try {
-    const [results] = await db.query(
-      "SELECT nickname, content, writeTime FROM comments"
-    );
+    const allSql =
+      "SELECT nickname, content, writeTime FROM comments WHERE postId = ?";
+    const [results] = await db.query(allSql, [postId]);
     res.json(results);
   } catch (error) {
-    res.status(500).json({ message: "Server Error" });
+    res.status(500).json({ message: "서버 에러" });
     console.error(error);
   }
 });
 
-function wTime() {
-  var today = new Date();
-  var year = today.getFullYear();
-  var month = ("0" + (today.getMonth() + 1)).slice(-2);
-  var date = ("0" + today.getDate()).slice(-2);
-  var hours = ("0" + today.getHours()).slice(-2);
-  var minutes = ("0" + today.getMinutes()).slice(-2);
-  var seconds = ("0" + today.getSeconds()).slice(-2);
-
-  return (
-    year +
-    "-" +
-    month +
-    "-" +
-    date +
-    " " +
-    hours +
-    ":" +
-    minutes +
-    ":" +
-    seconds
-  );
-}
-
-router.post("/add", async (req, res) => {
-  //댓글 추가 기능
-  const writeTime = wTime();
-  const { nickname, content } = req.body;
-  console.log(req.body);
+router.post("/:postId", isLoggedIn, async (req, res) => {
   try {
-    const [results] = await db.query(
-      "INSERT INTO comments ( nickname, content, writeTime) VALUES (?, ?, ?)",
-      [nickname, content, writeTime]
-    );
+    const writeTime = new Date();
+    const content = req.body.content;
+    const postId = Number(req.params.postId); //해당 댓글의 포스팅 id
+    const parentId = Number(req.query.parentId) || null; //대댓글 시 부모 댓글 id
+    const userId = Number(req.user[0].id);
+    const userNickname = req.user[0].nickname;
+
+    const addSql =
+      "INSERT INTO comments ( userId, postId, nickname, content, writeTime, parentId) VALUES (?, ?, ?, ?, ?, ?)";
+    await db.query(addSql, [
+      userId,
+      postId,
+      userNickname,
+      content,
+      writeTime,
+      parentId,
+    ]);
 
     res.status(200).json({
       message: "댓글이 성공적으로 작성되었습니다.",
       comment: {
-        nickname,
+        userNickname,
         content,
         writeTime,
       },
     });
   } catch (error) {
-    res.status(500).json({ message: "Server Error" });
     console.error(error);
+    res.status(500).json({ message: "댓글 추가 서버에러" });
   }
 });
+// 댓글추가 : http://localhost:8000/comment/123
+//대댓글 추가 : http://localhost:8000/comment/123?parentId=456
 
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", isLoggedIn, async (req, res) => {
   // 댓글 삭제 기능
-  const id = req.params.id;
-  const userNickname = req.body.nickname;
+  const id = req.params.id; //URl에서 추출된 매개변수 값
+  const userId = req.user[0].id;
 
   try {
-    const [comments] = await db.query("SELECT * FROM comments WHERE id = ?", [
-      id,
-    ]);
-    console.log(comments);
+    const commentSql = "SELECT * FROM comments WHERE id = ?";
+    const [comments] = await db.query(commentSql, id);
+    //삭제하려는 댓글 레코드
+
     if (comments.length === 0) {
       res.status(404).send("해당하는 댓글이 더 이상 존재하지 않습니다.");
       return;
     }
 
-    //해당 댓글id에 해당하는 댓글 작성자, 게시글 작성자 nickname 가져오기
-    const [possiblNicknames] = await db.query(
-      `SELECT comments.nickname AS commentNickname, postings.nickname AS postNickname 
-       FROM comments 
-       JOIN postings ON comments.postId = postings.id 
-       WHERE comments.id = ?`,
-      [id]
-    );
-    console.log(possiblNicknames);
+    const commentUserId = comments[0].userId;
 
-    if (!possiblNicknames || possiblNicknames.length === 0) {
-      res.status(500).send("서버 에러1");
-      return;
-    }
-
-    if (
-      userNickname === possiblNicknames[0].commentNickname ||
-      userNickname === possiblNicknames[0].postNickname
-    ) {
-      await db.query("DELETE FROM comments WHERE id = ?", [id]);
+    // 댓글 작성자 id vs 삭제요청 유저 id 비교 후 권한 부여
+    if (userId === commentUserId) {
+      const deleteSql = "DELETE FROM comments WHERE id = ?";
+      const [results] = await db.query(deleteSql, id);
       res.status(200).send("댓글이 삭제되었습니다.");
     } else {
-      res.status(403).send("댓글을 삭제할 권한이 존재하지 않습니다");
+      res.status(403).send("댓글을 삭제할 권한이 존재하지 않습니다.");
     }
   } catch (error) {
-    res.status(500).json({ message: error.message || "서버 에러2" });
+    res.status(500).json({ message: error.message || "댓글 삭제 서버 에러" });
     console.error(error);
   }
 });
