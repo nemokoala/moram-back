@@ -16,5 +16,6 @@ router.get("/", isLoggedIn, async (req, res) => {
     res.status(500).send(err);
   }
 });
+//되나 확인해보야지
 
 module.exports = router;
