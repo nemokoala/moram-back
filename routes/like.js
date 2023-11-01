@@ -7,7 +7,7 @@ const { isLoggedIn} = require("../config/middleware");
 //좋아요 중복기능
 router.get("/:postId", isLoggedIn, async (req, res) => {
   try {
-    const { userId } = req.user;
+    const { userId } = req.session.passport.user[0];
     const { postId } = req.params;
 
     const checkSql = "SELECT * FROM likes WHERE userId = ? AND postId = ?";
@@ -27,7 +27,7 @@ router.get("/:postId", isLoggedIn, async (req, res) => {
 //좋아요 기능
 router.post("/:postId", isLoggedIn, async (req, res) => {
   try {
-    const { userId } = req.user;
+    const { userId } = req.session.passport.user[0];
     const { postId } = req.params;
 
     const likedSql = "INSERT INTO likes (userId, postId) VALUES (?, ?)";
@@ -48,7 +48,8 @@ router.post("/:postId", isLoggedIn, async (req, res) => {
   // 좋아요 취소 기능
   router.delete("/:postId", isLoggedIn, async (req, res) => {
     try {
-      const { userId, postId } = req.body;
+      const { userId } = req.session.passport.user[0];
+      const { postId } = req.params;
       const unlikeSql = "DELETE FROM likes WHERE userId = ? AND postId = ?";
       const [result] = await db.query(unlikeSql, [userId, postId]);
   
