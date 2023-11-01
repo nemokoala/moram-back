@@ -343,6 +343,10 @@ router.post("/ex", async (req, res) => {
   }
 });
 
+router.get("/certify", (req, res) => {
+  res.render("certify");
+});
+
 router.get("/check", (req, res) => {
   const user = req.session.passport;
   console.log("user -> ", user);
@@ -369,5 +373,4 @@ router.get(
     );
   }
 );
-
 module.exports = router;
