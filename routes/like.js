@@ -6,20 +6,31 @@ const { isLoggedIn} = require("../config/middleware");
 
 // 좋아요 기능
 router.post("/:postId", isLoggedIn, async (req, res) => {
-    try {
-      const { userId, postId } = req.body;
+  try {
+    const { userId, postId } = req.body;
+    
+    // 좋아요 중복체크
+    const checkSql = "SELECT * FROM likes WHERE userId = ? AND postId = ?";
+    const [rows] = await db.query(checkSql, [userId, postId]);
+
+    if (rows.length > 0) {
+      res.status(400).json({ message: "이미 좋아요를 눌렀습니다." });
+    } else {
+      // 좋아요 기능
       const likedSql = "INSERT INTO likes (userId, postId) VALUES (?, ?)";
       await db.query(likedSql, [userId, postId]);
-  
+
       const updatePostSql = "UPDATE postings SET likesCount = likesCount + 1 WHERE id = ?";
       await db.query(updatePostSql, [postId]);
-  
+
       res.status(200).json({ message: "좋아요!" });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: "서버 오류입니다." });
     }
-  });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "서버 오류입니다." });
+  }
+});
+
   
   // 좋아요 취소 기능
   router.delete("/:postId", isLoggedIn, async (req, res) => {
@@ -42,5 +53,6 @@ router.post("/:postId", isLoggedIn, async (req, res) => {
     }
   });
 
+  
   module.exports = router;
   
