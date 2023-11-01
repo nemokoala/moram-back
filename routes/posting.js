@@ -128,16 +128,16 @@ router.delete("/delete/:id", isLoggedIn , async(req,res)=>{
 
 router.post("/report/:postId", isLoggedIn, async (req, res) => {
   try {
-      const { userId } = req.user; // 로그인한 사용자의 ID
+      const { userId, nickname } = req.user; // 로그인한 사용자의 ID와 닉네임
       const { postId } = req.params; // 신고할 게시물의 ID
       const { reason, description } = req.body; // 신고 이유와 상세 설명
       const createTime = new Date(); // 신고 시간
 
       // 신고 정보를 데이터베이스에 저장하는 SQL 쿼리
-      const reportSql = "INSERT INTO reports (userId, postId, reason, description, createTime) VALUES (?, ?, ?, ?, ?)";
+      const reportSql = "INSERT INTO reports (userId, nickname, postId, reason, description, createTime) VALUES (?, ?, ?, ?, ?, ?)";
       
       // SQL 쿼리 실행
-      await db.query(reportSql, [userId, postId, reason, description, createTime]);
+      await db.query(reportSql, [userId, nickname, postId, reason, description, createTime]);
       
       res.status(200).json({ message: "신고가 접수되었습니다." });
   } catch (error) {
@@ -145,6 +145,7 @@ router.post("/report/:postId", isLoggedIn, async (req, res) => {
       res.status(500).json({ message: "서버 오류입니다." });
   }
 });
+
 
 
 module.exports = router;
