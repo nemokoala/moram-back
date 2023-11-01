@@ -33,6 +33,12 @@ router.get("/", async (req, res) => {
       titleSql += " WHERE " + conditions.join(" AND ");
     }
 
+    // 작성 시간을 기준으로 내림차순 정렬
+    titleSql += " ORDER BY writeTime DESC";
+
+    // 최근에 써진 글 20개만 가져오기
+    titleSql += " LIMIT 20";
+
     const [results] = await db.query(titleSql, queryParams);
     return res.json(results);
   } catch (error) {
@@ -40,6 +46,7 @@ router.get("/", async (req, res) => {
     console.error(error);
   }
 });
+
 
 // 특정 게시글 조회
 router.get("/:id", async (req, res) => {
@@ -62,7 +69,7 @@ router.get("/:id", async (req, res) => {
 });
 
 // 새로운 게시글 추가
-router.post("/", isLoggedIn, async (req, res) => {
+router.post("/:id", isLoggedIn, async (req, res) => {
   const { title, content, img1Url, img2Url, img3Url, category, tag } = req.body;
   // 여기서 세션으로부터 userId와 nickname을 가져옵니다.
   console.log("포스트", req.session.passport);
@@ -94,7 +101,7 @@ router.post("/", isLoggedIn, async (req, res) => {
 });
 
 // 특정 게시글 업데이트
-router.put("/update/:id", isLoggedIn, async (req, res) => {
+router.put("/:id", isLoggedIn, async (req, res) => {
   const {
     userId,
     nickname,
@@ -144,8 +151,8 @@ router.put("/update/:id", isLoggedIn, async (req, res) => {
   }
 });
 
-// 특정 게시글 삭제 //user 인증 기능 하면 추가.
-router.delete("/delete/:id", isLoggedIn, async (req, res) => {
+// 특정 게시글 삭제 
+router.delete("/:id", isLoggedIn, async (req, res) => {
   try {
     const deleteSql = "DELETE FROM postings WHERE id = ?";
     const [results] = await db.query(deleteSql, [req.params.id]);
