@@ -47,7 +47,6 @@ router.get("/", async (req, res) => {
   }
 });
 
-
 // 특정 게시글 조회
 router.get("/:id", async (req, res) => {
   try {
@@ -69,7 +68,7 @@ router.get("/:id", async (req, res) => {
 });
 
 // 새로운 게시글 추가
-router.post("/:id", isLoggedIn, async (req, res) => {
+router.post("/", isLoggedIn, async (req, res) => {
   const { title, content, img1Url, img2Url, img3Url, category, tag } = req.body;
   // 여기서 세션으로부터 userId와 nickname을 가져옵니다.
   console.log("포스트", req.session.passport);
@@ -151,7 +150,7 @@ router.put("/:id", isLoggedIn, async (req, res) => {
   }
 });
 
-// 특정 게시글 삭제 
+// 특정 게시글 삭제
 router.delete("/:id", isLoggedIn, async (req, res) => {
   try {
     const deleteSql = "DELETE FROM postings WHERE id = ?";
