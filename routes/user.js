@@ -5,6 +5,7 @@ const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const session = require("express-session");
 const ejs = require("ejs");
+const axios = require("axios");
 const passport = require("../config/passport");
 const smtpTransport = require("../config/email");
 const {
@@ -345,6 +346,26 @@ router.post("/ex", async (req, res) => {
 
 router.get("/certify", (req, res) => {
   res.render("certify");
+});
+
+router.post("/certify", async (req, res) => {
+  try {
+    const { email } = req.body;
+    const certifyResponse = await axios.post(
+      "https://univcert.com/api/v1/certify",
+      {
+        key: `${process.env.UNIVCERT_KEY}`,
+        email: "c1004sos@wku.ac.kr",
+        univName: "원광대학교",
+        univ_check: true,
+      }
+    );
+
+    console.log(certifyResponse.data);
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("서버에러");
+  }
 });
 
 router.get("/check", (req, res) => {
