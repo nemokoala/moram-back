@@ -65,7 +65,8 @@ router.get("/:id", async (req, res) => {
 router.post("/", isLoggedIn, async (req, res) => {
   const { title, content, img1Url, img2Url, img3Url, category, tag } = req.body;
   // 여기서 세션으로부터 userId와 nickname을 가져옵니다.
-  const { userId, nickname } = req.session.passport.user;
+  console.log("포스트", req.session.passport);
+  const { userId, nickname } = req.session.passport.user[0];
 
   try {
     const addSql =
