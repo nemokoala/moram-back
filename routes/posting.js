@@ -9,15 +9,14 @@ router.get("/test", (req, res) => {
   console.log(req.session.passport);
 });
 
-//과 게시글 조회
 router.get("/", async (req, res) => {
   try {
-    let { category, tag } = req.query;
+    let { category, tag, lastId } = req.query;
     let titleSql =
       "SELECT id, title, nickname, writeTime, hitCount, likesCount, tag, category FROM postings";
     let queryParams = [];
 
-    if (category || tag) {
+    if (category || tag || lastId) {
       let conditions = [];
 
       if (category) {
@@ -28,6 +27,11 @@ router.get("/", async (req, res) => {
       if (tag) {
         conditions.push("tag = ?");
         queryParams.push(tag);
+      }
+
+      if (lastId) {
+        conditions.push("id < ?");
+        queryParams.push(lastId);
       }
 
       titleSql += " WHERE " + conditions.join(" AND ");
@@ -46,6 +50,7 @@ router.get("/", async (req, res) => {
     console.error(error);
   }
 });
+
 
 
 // 특정 게시글 조회
@@ -69,7 +74,7 @@ router.get("/:id", async (req, res) => {
 });
 
 // 새로운 게시글 추가
-router.post("/:id", isLoggedIn, async (req, res) => {
+router.post("/", isLoggedIn, async (req, res) => {
   const { title, content, img1Url, img2Url, img3Url, category, tag } = req.body;
   // 여기서 세션으로부터 userId와 nickname을 가져옵니다.
   console.log("포스트", req.session.passport);
@@ -140,7 +145,7 @@ router.put("/:id", isLoggedIn, async (req, res) => {
     ]);
 
     if (results.affectedRows === 0) {
-      //length성능차이 있는지
+     
       return res.status(404).json({ message: "게시물을 찾을 수 없습니다." });
     }
 
