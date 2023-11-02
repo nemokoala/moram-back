@@ -40,7 +40,7 @@ router.get("/", async (req, res) => {
     // 작성 시간을 기준으로 내림차순 정렬
     titleSql += " ORDER BY writeTime DESC";
 
-    // 최근에 써진 글 20개만 가져오기
+    // 최근에 써진 글 5개만 가져오기
     titleSql += " LIMIT 5";
 
     const [results] = await db.query(titleSql, queryParams);
@@ -50,6 +50,8 @@ router.get("/", async (req, res) => {
     console.error(error);
   }
 });
+
+
 
 // 특정 게시글 조회
 router.get("/:id", async (req, res) => {
@@ -144,6 +146,7 @@ router.put("/:id", isLoggedIn, async (req, res) => {
     ]);
 
     if (results.affectedRows === 0) {
+     
       return res.status(404).json({ message: "게시물을 찾을 수 없습니다." });
     }
 
@@ -154,7 +157,7 @@ router.put("/:id", isLoggedIn, async (req, res) => {
   }
 });
 
-// 특정 게시글 삭제
+// 특정 게시글 삭제 
 router.delete("/:id", isLoggedIn, async (req, res) => {
   try {
     const deleteSql = "DELETE FROM postings WHERE id = ?";
