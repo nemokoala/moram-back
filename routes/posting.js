@@ -14,11 +14,10 @@ router.get("/", async (req, res) => {
     let { category, tag, lastId } = req.query;
     let titleSql =
       "SELECT id, userId, title, nickname, writeTime, hitCount, likesCount, tag, category FROM postings";
+    let endIdSql = "SELECT id FROM postings";
     let queryParams = [];
-
+    let conditions = [];
     if (category || tag || lastId) {
-      let conditions = [];
-
       if (category) {
         conditions.push("category = ?");
         queryParams.push(category);
@@ -31,27 +30,34 @@ router.get("/", async (req, res) => {
 
       if (lastId) {
         conditions.push("id < ?");
-        queryParams.push(lastId);
+        queryParams.push(Number(lastId));
       }
 
       titleSql += " WHERE " + conditions.join(" AND ");
+      endIdSql += " WHERE " + conditions.join(" AND ");
     }
 
     // 작성 시간을 기준으로 내림차순 정렬
-    titleSql += " ORDER BY writeTime DESC";
+    titleSql += " ORDER BY id DESC";
 
-    // 최근에 써진 글 5개만 가져오기
-    titleSql += " LIMIT 5";
-
+    // 최근에 써진 글 6개만 가져오기
+    titleSql += " LIMIT 6";
+    endIdSql += " ORDER BY id ASC LIMIT 1";
+    console.log("db sql", titleSql);
     const [results] = await db.query(titleSql, queryParams);
-    return res.json(results);
+    console.log(results);
+    const [endId] = await db.query(endIdSql, queryParams);
+    console.log("endsql", endIdSql);
+    return res.json({
+      content: results,
+      endId: endId[0]?.id,
+      lastId: results[results.length - 1]?.id || 9999,
+    });
   } catch (error) {
     res.status(500).json({ message: "서버 오류입니다." });
     console.error(error);
   }
 });
-
-
 
 // 특정 게시글 조회
 router.get("/:id", async (req, res) => {
@@ -146,7 +152,6 @@ router.put("/:id", isLoggedIn, async (req, res) => {
     ]);
 
     if (results.affectedRows === 0) {
-     
       return res.status(404).json({ message: "게시물을 찾을 수 없습니다." });
     }
 
@@ -157,7 +162,7 @@ router.put("/:id", isLoggedIn, async (req, res) => {
   }
 });
 
-// 특정 게시글 삭제 
+// 특정 게시글 삭제
 router.delete("/:id", isLoggedIn, async (req, res) => {
   try {
     const deleteSql = "DELETE FROM postings WHERE id = ?";
@@ -177,7 +182,7 @@ router.delete("/:id", isLoggedIn, async (req, res) => {
 router.post("/report/:postId", isLoggedIn, async (req, res) => {
   try {
     const { nickname } = req.session.passport.user[0];
-    const userId = req.session.passport.user[0].id;// 로그인한 사용자의 ID
+    const userId = req.session.passport.user[0].id; // 로그인한 사용자의 ID
     const { postId } = req.params; // 신고할 게시물의 ID
     const { reason, description } = req.body; // 신고 이유와 상세 설명
     const createTime = new Date(); // 신고 시간
@@ -220,7 +225,12 @@ router.get("/search", async (req, res) => {
     // SQL의 LIKE 연산자를 사용하여 검색어가 포함된 게시물 찾기
     // 검색어 앞뒤에 '%'를 붙여 검색어가 어디에든 포함된 경우를 찾을 수 있음
     // LIMIT과 OFFSET에 사용할 값을 계산하여 쿼리 파라미터에 추가
-    const queryParams = [`%${keyword}%`, `%${keyword}%`, `%${keyword}%`, (page - 1) * 10];
+    const queryParams = [
+      `%${keyword}%`,
+      `%${keyword}%`,
+      `%${keyword}%`,
+      (page - 1) * 10,
+    ];
 
     const [results] = await db.query(searchSql, queryParams);
 
