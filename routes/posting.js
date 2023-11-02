@@ -13,7 +13,7 @@ router.get("/", async (req, res) => {
   try {
     let { category, tag, lastId } = req.query;
     let titleSql =
-      "SELECT id, title, nickname, writeTime, hitCount, likesCount, tag, category FROM postings";
+      "SELECT id, userId, title, nickname, writeTime, hitCount, likesCount, tag, category FROM postings";
     let queryParams = [];
 
     if (category || tag || lastId) {
@@ -41,7 +41,7 @@ router.get("/", async (req, res) => {
     titleSql += " ORDER BY writeTime DESC";
 
     // 최근에 써진 글 20개만 가져오기
-    titleSql += " LIMIT 20";
+    titleSql += " LIMIT 5";
 
     const [results] = await db.query(titleSql, queryParams);
     return res.json(results);
@@ -50,8 +50,6 @@ router.get("/", async (req, res) => {
     console.error(error);
   }
 });
-
-
 
 // 특정 게시글 조회
 router.get("/:id", async (req, res) => {
@@ -78,7 +76,8 @@ router.post("/", isLoggedIn, async (req, res) => {
   const { title, content, img1Url, img2Url, img3Url, category, tag } = req.body;
   // 여기서 세션으로부터 userId와 nickname을 가져옵니다.
   console.log("포스트", req.session.passport);
-  const { userId, nickname } = req.session.passport.user[0];
+  const { nickname } = req.session.passport.user[0];
+  const userId = req.session.passport.user[0].id;
 
   try {
     const addSql =
@@ -145,7 +144,6 @@ router.put("/:id", isLoggedIn, async (req, res) => {
     ]);
 
     if (results.affectedRows === 0) {
-     
       return res.status(404).json({ message: "게시물을 찾을 수 없습니다." });
     }
 
@@ -156,7 +154,7 @@ router.put("/:id", isLoggedIn, async (req, res) => {
   }
 });
 
-// 특정 게시글 삭제 
+// 특정 게시글 삭제
 router.delete("/:id", isLoggedIn, async (req, res) => {
   try {
     const deleteSql = "DELETE FROM postings WHERE id = ?";
