@@ -176,7 +176,8 @@ router.delete("/:id", isLoggedIn, async (req, res) => {
 
 router.post("/report/:postId", isLoggedIn, async (req, res) => {
   try {
-    const { userId, nickname } = req.user; // 로그인한 사용자의 ID와 닉네임
+    const { nickname } = req.session.passport.user[0];
+    const userId = req.session.passport.user[0].id;// 로그인한 사용자의 ID
     const { postId } = req.params; // 신고할 게시물의 ID
     const { reason, description } = req.body; // 신고 이유와 상세 설명
     const createTime = new Date(); // 신고 시간
@@ -196,6 +197,38 @@ router.post("/report/:postId", isLoggedIn, async (req, res) => {
     ]);
 
     res.status(200).json({ message: "신고가 접수되었습니다." });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "서버 오류입니다." });
+  }
+});
+
+router.get("/search", async (req, res) => {
+  try {
+    const { keyword, page = 1 } = req.query; // 검색어와 페이지 번호를 받습니다. 페이지 번호가 없는 경우 기본값 1
+
+    if (!keyword) {
+      return res.status(400).json({ message: "검색어를 입력해주세요." }); // 검색어가 없는 경우 에러 메시지를 반환
+    }
+
+    // 검색어가 제목, 내용, 태그 중 어디에든 포함되어 있는 게시물을 찾는 SQL 쿼리
+    // 검색 결과를 페이지 당 10개씩 제한, 페이지 번호에 따라 결과를 건너뛰는 LIMIT과 OFFSET을 사용
+    const searchSql =
+      "SELECT id, userId, title, nickname, writeTime, hitCount, likesCount, tag, category FROM postings \
+      WHERE title LIKE ? OR content LIKE ? OR tag LIKE ? LIMIT 10 OFFSET ?";
+
+    // SQL의 LIKE 연산자를 사용하여 검색어가 포함된 게시물 찾기
+    // 검색어 앞뒤에 '%'를 붙여 검색어가 어디에든 포함된 경우를 찾을 수 있음
+    // LIMIT과 OFFSET에 사용할 값을 계산하여 쿼리 파라미터에 추가
+    const queryParams = [`%${keyword}%`, `%${keyword}%`, `%${keyword}%`, (page - 1) * 10];
+
+    const [results] = await db.query(searchSql, queryParams);
+
+    if (results.length === 0) {
+      return res.status(404).json({ message: "검색 결과가 없습니다." }); // 검색 결과가 없는 경우 에러 메시지 반환
+    }
+
+    res.json(results); // 검색 결과 반환
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "서버 오류입니다." });
