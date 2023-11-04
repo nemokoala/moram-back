@@ -130,14 +130,18 @@ router.put("/:id", isLoggedIn, async (req, res) => {
     }
 
     // 게시글의 작성자가 확인되었으면 게시글을 수정합니다.
-    const updateSql = "UPDATE postings SET title=?, content=?, updateTime=NOW(), tag=?, category=? WHERE id = ?";
+    const updateSql = "UPDATE postings SET title=?, content=?, img1Url=?, img2Url=?, img3Url=?, category=?, tag=?, updateTime=NOW() WHERE id = ?";
     const [results] = await db.query(updateSql, [
-      req.body.title,
-      req.body.content,
-      req.body.tag,
-      req.body.category,
-      req.params.id,
-    ]);
+    req.body.title,
+    req.body.content,
+    req.body.img1Url,
+    req.body.img2Url,
+    req.body.img3Url,
+    req.body.category,
+    req.body.tag,
+    req.params.id,
+]);
+
 
     res.json({ message: "게시물이 수정되었습니다." });
   } catch (error) {
