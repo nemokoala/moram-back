@@ -130,10 +130,12 @@ router.put("/:id", isLoggedIn, async (req, res) => {
     }
 
     // 게시글의 작성자가 확인되었으면 게시글을 수정합니다.
-    const updateSql = "UPDATE postings SET title=?, content=?, updateTime=NOW() WHERE id = ?";
+    const updateSql = "UPDATE postings SET title=?, content=?, updateTime=NOW(), tag=?, category=? WHERE id = ?";
     const [results] = await db.query(updateSql, [
       req.body.title,
       req.body.content,
+      req.body.tag,
+      req.body.category,
       req.params.id,
     ]);
 
