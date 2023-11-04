@@ -15,6 +15,7 @@ const postingRoutes = require("./posting");
 const commentRoutes = require("./comment");
 const adminRoutes = require("./admin");
 const likeRoutes = require("./like");
+const bookmarkRoutes = require("./bookmark");
 const { authenticateUser, isAdmin } = require("../config/middleware");
 app.use(
   cors({
@@ -41,6 +42,7 @@ app.use("/posting", postingRoutes);
 app.use("/comment", commentRoutes);
 app.use("/like", likeRoutes);
 app.use("/admin", isAdmin, adminRoutes);
+app.use("/bookmark", bookmarkRoutes);
 
 app.get("/hi", (req, res) => {
   res.status(200).send(`hello`);
