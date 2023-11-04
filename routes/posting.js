@@ -40,8 +40,8 @@ router.get("/", async (req, res) => {
     // 작성 시간을 기준으로 내림차순 정렬
     titleSql += " ORDER BY id DESC";
 
-    // 최근에 써진 글 6개만 가져오기
-    titleSql += " LIMIT 6";
+    // 최근에 써진 글 7개만 가져오기
+    titleSql += " LIMIT 7";
     endIdSql += " ORDER BY id ASC LIMIT 1";
     console.log("db sql", titleSql);
     const [results] = await db.query(titleSql, queryParams);
@@ -51,7 +51,7 @@ router.get("/", async (req, res) => {
     return res.json({
       content: results,
       endId: endId[0]?.id,
-      lastId: results[results.length - 1]?.id || 9999,
+      lastId: results[results.length - 1]?.id || 99999,
     });
   } catch (error) {
     res.status(500).json({ message: "서버 오류입니다." });
