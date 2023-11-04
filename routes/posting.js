@@ -40,8 +40,8 @@ router.get("/", async (req, res) => {
     // 작성 시간을 기준으로 내림차순 정렬
     titleSql += " ORDER BY id DESC";
 
-    // 최근에 써진 글 6개만 가져오기
-    titleSql += " LIMIT 6";
+    // 최근에 써진 글 7개만 가져오기
+    titleSql += " LIMIT 7";
     endIdSql += " ORDER BY id ASC LIMIT 1";
     console.log("db sql", titleSql);
     const [results] = await db.query(titleSql, queryParams);
@@ -51,7 +51,7 @@ router.get("/", async (req, res) => {
     return res.json({
       content: results,
       endId: endId[0]?.id,
-      lastId: results[results.length - 1]?.id || 9999,
+      lastId: results[results.length - 1]?.id || 99999,
     });
   } catch (error) {
     res.status(500).json({ message: "서버 오류입니다." });
@@ -130,18 +130,18 @@ router.put("/:id", isLoggedIn, async (req, res) => {
     }
 
     // 게시글의 작성자가 확인되었으면 게시글을 수정합니다.
-    const updateSql = "UPDATE postings SET title=?, content=?, img1Url=?, img2Url=?, img3Url=?, category=?, tag=?, updateTime=NOW() WHERE id = ?";
+    const updateSql =
+      "UPDATE postings SET title=?, content=?, img1Url=?, img2Url=?, img3Url=?, category=?, tag=?, updateTime=NOW() WHERE id = ?";
     const [results] = await db.query(updateSql, [
-    req.body.title,
-    req.body.content,
-    req.body.img1Url,
-    req.body.img2Url,
-    req.body.img3Url,
-    req.body.category,
-    req.body.tag,
-    req.params.id,
-]);
-
+      req.body.title,
+      req.body.content,
+      req.body.img1Url,
+      req.body.img2Url,
+      req.body.img3Url,
+      req.body.category,
+      req.body.tag,
+      req.params.id,
+    ]);
 
     res.json({ message: "게시물이 수정되었습니다." });
   } catch (error) {
@@ -177,7 +177,6 @@ router.delete("/:id", isLoggedIn, async (req, res) => {
     res.status(500).json({ message: "서버 오류입니다." });
   }
 });
-
 
 router.post("/report/:postId", isLoggedIn, async (req, res) => {
   try {
