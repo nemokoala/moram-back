@@ -129,10 +129,7 @@ router.post("/login", (req, res, next) => {
         return next(loginError);
       }
       // done(null, user)로 로직이 성공적이라면, 세션에 사용자 정보를 저장해놔서 로그인 상태가 된다.
-      return res.json({
-        message: "로그인 성공",
-        content: returnUser(user[0]),
-      });
+      return res.json({ message: "로그인 성공", content: user });
     });
   })(req, res, next); //! 미들웨어 내의 미들웨어에는 콜백을 실행시키기위해 (req, res, next)를 붙인다.
 });
@@ -474,6 +471,24 @@ router.post("/univsearch", async (req, res) => {
     res.status(500).send("서버에러");
   }
 });
+
+router.post("/univdelete", async (req, res) => {
+  const { email } = req.body;
+  try {
+    const sql = `UPDATE users SET verified = ?, univName = ? WHERE email = ?`;
+    const [result] = await db.query(sql, [0, null, email]);
+    console.log(result);
+    res.status(200).json({
+      code: 200,
+      success: true,
+      message: "대학교 인증이 해제되었습니다.",
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("서버에러");
+  }
+});
+
 router.get("/upload", async (req, res) => {
   try {
     const data = fs.readFileSync("univList.json", "utf8");
@@ -496,9 +511,9 @@ router.get("/upload", async (req, res) => {
 });
 
 router.get("/check", (req, res) => {
-  const user = req.session.passport.user;
+  const user = req.session.passport;
   console.log("user -> ", user);
-  res.send(returnUser(user[0]));
+  res.send(user);
 });
 
 router.get("/test", async (req, res) => {
@@ -520,24 +535,13 @@ router.get(
   passport.authenticate("kakao", { failureRedirect: "/user" }),
   (req, res) => {
     console.log("유저정보: ", req.user);
-    //console.log("user-> ", user);
     res.redirect(
       "http://localhost:3000/login-success?user=" +
-        JSON.stringify(returnUser(req.user[0]))
+        JSON.stringify({
+          email: req.user[0].email,
+          nickname: req.user[0].nickname,
+        })
     );
   }
 );
-
-function returnUser(user) {
-  const userData = {
-    id: user.id,
-    nickname: user.nickname,
-    platformType: user.platformType,
-    email: user.email,
-    gptCount: user.gptCount,
-    role: user.role,
-  };
-  return userData;
-}
-
 module.exports = router;
