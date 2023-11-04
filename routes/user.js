@@ -102,7 +102,11 @@ router.post("/register", async (req, res) => {
   }
 });
 
-router.post("/login", (req, res, next) => {
+router.get("/login", (req, res) => {
+  res.render("login");
+});
+
+router.post("/login", async (req, res, next) => {
   //? local로 실행이 되면 localstrategy.js를 찾아 실행한다.
   passport.authenticate("local", (authError, user, info) => {
     //? (authError, user, info) => 이 콜백 미들웨어는 localstrategy에서 done()이 호출되면 실행된다.
@@ -129,6 +133,12 @@ router.post("/login", (req, res, next) => {
         return next(loginError);
       }
       // done(null, user)로 로직이 성공적이라면, 세션에 사용자 정보를 저장해놔서 로그인 상태가 된다.
+      //자동로그인
+      if (req.body.remember) {
+        req.session.cookie.expires = 1000 * 60 * 60 * 24 * 7; //쿠키 유효기간 7일
+      } else {
+        req.session.cookie.maxAge = false;
+      }
       return res.json({ message: "로그인 성공", content: user });
     });
   })(req, res, next); //! 미들웨어 내의 미들웨어에는 콜백을 실행시키기위해 (req, res, next)를 붙인다.
