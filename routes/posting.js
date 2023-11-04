@@ -14,11 +14,10 @@ router.get("/", async (req, res) => {
     let { category, tag, lastId } = req.query;
     let titleSql =
       "SELECT id, userId, title, nickname, writeTime, hitCount, likesCount, tag, category FROM postings";
+    let endIdSql = "SELECT id FROM postings";
     let queryParams = [];
-
+    let conditions = [];
     if (category || tag || lastId) {
-      let conditions = [];
-
       if (category) {
         conditions.push("category = ?");
         queryParams.push(category);
@@ -31,20 +30,29 @@ router.get("/", async (req, res) => {
 
       if (lastId) {
         conditions.push("id < ?");
-        queryParams.push(lastId);
+        queryParams.push(Number(lastId));
       }
 
       titleSql += " WHERE " + conditions.join(" AND ");
+      endIdSql += " WHERE " + conditions.join(" AND ");
     }
 
     // 작성 시간을 기준으로 내림차순 정렬
-    titleSql += " ORDER BY writeTime DESC";
+    titleSql += " ORDER BY id DESC";
 
-    // 최근에 써진 글 5개만 가져오기
-    titleSql += " LIMIT 5";
-
+    // 최근에 써진 글 6개만 가져오기
+    titleSql += " LIMIT 6";
+    endIdSql += " ORDER BY id ASC LIMIT 1";
+    console.log("db sql", titleSql);
     const [results] = await db.query(titleSql, queryParams);
-    return res.json(results);
+    console.log(results);
+    const [endId] = await db.query(endIdSql, queryParams);
+    console.log("endsql", endIdSql);
+    return res.json({
+      content: results,
+      endId: endId[0]?.id,
+      lastId: results[results.length - 1]?.id || 9999,
+    });
   } catch (error) {
     res.status(500).json({ message: "서버 오류입니다." });
     console.error(error);
@@ -106,46 +114,28 @@ router.post("/", isLoggedIn, async (req, res) => {
 
 // 특정 게시글 업데이트
 router.put("/:id", isLoggedIn, async (req, res) => {
-  const {
-    userId,
-    nickname,
-    writeTime,
-    updateTime,
-    title,
-    content,
-    img1Url,
-    img2Url,
-    img3Url,
-    likesCount,
-    hitCount,
-    category,
-    tag,
-  } = req.body;
+  // 로그인한 사용자의 ID를 가져옵니다.
+  const loginUserId = req.session.passport.user[0].id;
 
   try {
-    const updateSql =
-      "UPDATE postings SET userId=?, nickname=?, writeTime=?, updateTime=?, title=?, content=?, img1Url=?, img2Url=?, img3Url=?,\
-    likesCount=? ,hitCount=? ,category=? ,tag=? WHERE id = ?";
-    const [results] = await db.query(updateSql, [
-      userId,
-      nickname,
-      writeTime,
-      updateTime,
-      title,
-      content,
-      img1Url,
-      img2Url,
-      img3Url,
-      likesCount,
-      hitCount,
-      category,
-      tag,
-      req.params.id,
-    ]);
-
-    if (results.affectedRows === 0) {
+    // 먼저 해당 게시글의 작성자 ID를 조회합니다.
+    const selectSql = "SELECT userId FROM postings WHERE id = ?";
+    const [rows] = await db.query(selectSql, [req.params.id]);
+    if (!rows.length) {
       return res.status(404).json({ message: "게시물을 찾을 수 없습니다." });
     }
+    // 게시글의 작성자가 로그인한 사용자가 아니라면 에러를 반환합니다.
+    if (rows[0].userId !== loginUserId) {
+      return res.status(403).json({ message: "게시물 수정 권한이 없습니다." });
+    }
+
+    // 게시글의 작성자가 확인되었으면 게시글을 수정합니다.
+    const updateSql = "UPDATE postings SET title=?, content=?, updateTime=NOW() WHERE id = ?";
+    const [results] = await db.query(updateSql, [
+      req.body.title,
+      req.body.content,
+      req.params.id,
+    ]);
 
     res.json({ message: "게시물이 수정되었습니다." });
   } catch (error) {
@@ -156,13 +146,24 @@ router.put("/:id", isLoggedIn, async (req, res) => {
 
 // 특정 게시글 삭제
 router.delete("/:id", isLoggedIn, async (req, res) => {
-  try {
-    const deleteSql = "DELETE FROM postings WHERE id = ?";
-    const [results] = await db.query(deleteSql, [req.params.id]);
+  // 로그인한 사용자의 ID를 가져옵니다.
+  const loginUserId = req.session.passport.user[0].id;
 
-    if (results.affectedRows === 0) {
+  try {
+    // 먼저 해당 게시글의 작성자 ID를 조회합니다.
+    const selectSql = "SELECT userId FROM postings WHERE id = ?";
+    const [rows] = await db.query(selectSql, [req.params.id]);
+    if (!rows.length) {
       return res.status(404).json({ message: "게시물을 찾을 수 없습니다." });
     }
+    // 게시글의 작성자가 로그인한 사용자가 아니라면 에러를 반환합니다.
+    if (rows[0].userId !== loginUserId) {
+      return res.status(403).json({ message: "게시물 삭제 권한이 없습니다." });
+    }
+
+    // 게시글의 작성자가 확인되었으면 게시글을 삭제합니다.
+    const deleteSql = "DELETE FROM postings WHERE id = ?";
+    const [results] = await db.query(deleteSql, [req.params.id]);
 
     res.json({ message: "게시물이 삭제되었습니다." });
   } catch (error) {
@@ -170,6 +171,7 @@ router.delete("/:id", isLoggedIn, async (req, res) => {
     res.status(500).json({ message: "서버 오류입니다." });
   }
 });
+
 
 router.post("/report/:postId", isLoggedIn, async (req, res) => {
   try {
@@ -238,5 +240,3 @@ router.get("/search", async (req, res) => {
 });
 
 module.exports = router;
-
-//gittest
