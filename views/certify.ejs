@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>학교인증</title>
+  </head>
+  <body>
+    <h1>학교인증</h1>
+    <form action="/user/certify" method="post">
+      <div>
+        <label for="univName">대학교 이름: </label>
+        <input type="text" id="univName" name="univName" />
+      </div>
+      <label for="email">이메일: </label>
+      <input type="email" id="email" name="email" />
+      <button>인증번호발송</button>
+    </form>
+    <h1>코드인증</h1>
+    <form action="/user/certifycode" method="post">
+      <label for="email">이메일: </label>
+      <input type="email" id="email" name="email" />
+      <label for="code">인증번호: </label>
+      <input type="text" id="code" name="code" />
+      <button>인증하기</button>
+    </form>
+  </body>
+</html>

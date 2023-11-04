@@ -5,7 +5,9 @@ const bcrypt = require("bcrypt");
 const crypto = require("crypto");
 const session = require("express-session");
 const ejs = require("ejs");
+const axios = require("axios");
 const passport = require("../config/passport");
+const fs = require("fs");
 const smtpTransport = require("../config/email");
 const {
   generatePassword,
@@ -346,14 +348,169 @@ router.post("/ex", async (req, res) => {
   }
 });
 
+router.get("/certify", (req, res) => {
+  res.render("certify");
+});
+
+router.post("/certify", async (req, res) => {
+  console.log(req.body);
+  const { univName, verifiedEmail, receivedEmail } = req.body;
+  //email = c1004sos@wku.ac.kr
+  const sql = `SELECT * FROM univList WHERE univName = ?`;
+  const [result] = await db.query(sql, [univName]);
+  console.log(`DB에서 받아온 result: ${JSON.stringify(result)}`);
+  // db에 해당 대학교가 있는지 확인
+  if (result.length === 0) {
+    return res.status(400).json({
+      code: 400,
+      success: false,
+      message: "대학교를 찾을 수 없습니다.",
+    });
+  }
+  // 대학교 이메일 형식과 일치하는지 확인
+  const emailDomain = receivedEmail.substring(
+    receivedEmail.lastIndexOf("@") + 1
+  );
+  if (emailDomain !== result[0].email) {
+    return res.status(400).json({
+      code: 400,
+      success: false,
+      message: `대학교 이메일이 일치하지않습니다. 해당 대학 도메인은 ${result[0].email} 입니다.`,
+    });
+  }
+  //토큰 생성
+  const token = crypto.randomBytes(20).toString("hex");
+  // 1일 뒤에 만료되는 토큰
+  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  //db에 토큰 저장
+  const tokenSql = `INSERT INTO univVerification (univName, receivedEmail, verifiedEmail, token, expiresAt) VALUES (?, ?, ?, ?, ?)`;
+
+  await db.query(tokenSql, [
+    univName,
+    receivedEmail,
+    verifiedEmail,
+    token,
+    expiresAt,
+  ]);
+
+  // 대학교 인증 메일 발송
+  console.log(emailDomain);
+
+  console.log(token);
+  try {
+    let transporter = smtpTransport;
+    let mailOptions = {
+      from: "c1004sos@1gmail.com", //송신할 이메일
+      to: receivedEmail, //수신할 이메일
+      subject: "[모람모람]대학교 인증 메일입니다.",
+      html: ` <div>
+      <p>안녕하세요.</p>
+      <hr />
+      <span>아래 링크를 클릭하면 학교 이메일 인증이 완료됩니다.</span>
+      <a
+        href="http://localhost:8000/user/univActivate/${token}"
+        rel="noreferrer noopener"
+        target="_blank"
+        >http://localhost:8000/user/univActivate/${token}</a
+      >
+    </div>`,
+    };
+    await transporter.sendMail(mailOptions);
+    console.log("메일발송성공");
+    res.status(200).json({
+      success: true,
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("서버에러");
+  }
+});
+
+router.get("/univActivate/:token", async (req, res) => {
+  const { token } = req.params;
+  try {
+    const sql = `SELECT * FROM univVerification WHERE token = ? AND expiresAt > NOW()`;
+    const [result] = await db.query(sql, [token]);
+    if (result.length === 0) {
+      res.status(400).json({
+        code: 400,
+        success: false,
+        message: "만료된 토큰입니다.",
+      });
+    }
+    const univName = result[0].univName;
+    const email = result[0].verifiedEmail;
+    console.log(`대학이름: ${univName}, db상에서 수정될 이메일: ${email}`);
+    const searchSql = `SELECT * FROM users WHERE email = ?`;
+    const [user] = await db.query(searchSql, [email]);
+    console.log(user);
+    const updateSql = `UPDATE users SET verified = ?, univName = ? WHERE email = ?`;
+    const [updateResult] = await db.query(updateSql, [1, univName, email]);
+    console.log(updateResult);
+    const deleteSql = `DELETE FROM univVerification WHERE token = ?`;
+    await db.query(deleteSql, [token]);
+    res.status(200).json({
+      code: 200,
+      success: true,
+      message: "대학교 인증이 완료되었습니다.",
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("서버에러");
+  }
+});
+//실시간 검색
+router.post("/univsearch", async (req, res) => {
+  const univName = req.body.univName;
+  console.log(req.body);
+  console.log(univName);
+  try {
+    //univName이 들어가는 모든 대학 검색
+    const sql = "SELECT * FROM univList WHERE univName LIKE ?";
+    const [result] = await db.query(sql, ["%" + univName + "%"]);
+    res.status(200).json(result);
+    console.log(result);
+  } catch (err) {
+    res.status(500).send("서버에러");
+  }
+});
+router.get("/upload", async (req, res) => {
+  try {
+    const data = fs.readFileSync("univList.json", "utf8");
+    const univData = JSON.parse(data);
+
+    // 각 대학의 데이터를 univList 테이블에 저장
+    univData.forEach((univ) => {
+      const univName = univ.univName;
+      const email = univ.email;
+
+      const sql = `INSERT INTO univList (univName, email) VALUES (?, ?)`;
+      db.query(sql, [univName, email]);
+      console.log(univName, email);
+    });
+    console.log("성공!");
+    res.send("성공!");
+  } catch (err) {
+    console.log(err);
+  }
+});
+
 router.get("/check", (req, res) => {
   const user = req.session.passport.user;
   console.log("user -> ", user);
   res.send(returnUser(user[0]));
 });
 
-router.get("/test", (req, res) => {
-  console.log(process.env.KAKAO_ID);
+router.get("/test", async (req, res) => {
+  const certifyResponse = await axios.post(
+    "http://localhost:8000/user/certify",
+    {
+      key: `${process.env.UNIVCERT_KEY}`,
+      email: "c1004sos@wku.ac.kr",
+      univName: "원광대학교",
+      univ_check: true,
+    }
+  );
 });
 
 router.get("/kakao", passport.authenticate("kakao"));
