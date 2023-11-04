@@ -1,7 +1,6 @@
 {
   "name": "moram",
   "version": "1.0.0",
-  "description": "",
   "main": "index.js",
   "scripts": {
     "dev": "nodemon routes/index.js",
@@ -24,11 +23,12 @@
     "express-session": "^1.17.3",
     "jsonwebtoken": "^9.0.2",
     "mysql2": "^3.6.0",
-    "nodemailer": "^6.9.5",
+    "nodemailer": "^6.9.7",
     "nodemon": "^3.0.1",
     "openai": "^4.10.0",
     "passport": "^0.6.0",
     "passport-kakao": "^1.0.1",
     "passport-local": "^1.0.0"
-  }
+  },
+  "description": ""
 }

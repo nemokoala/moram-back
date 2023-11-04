@@ -22,6 +22,8 @@ app.use(
     credentials: true,
   })
 );
+app.use(express.urlencoded({ extended: false }));
+app.use(express.json());
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "../views"));
 
@@ -39,9 +41,6 @@ app.use("/posting", postingRoutes);
 app.use("/comment", commentRoutes);
 app.use("/like", likeRoutes);
 app.use("/admin", isAdmin, adminRoutes);
-
-app.use(express.urlencoded({ extended: false }));
-app.use(express.json());
 
 app.get("/hi", (req, res) => {
   res.status(200).send(`hello`);
