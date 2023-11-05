@@ -311,9 +311,25 @@ router.get("/reset/:token", async (req, res) => {
     res.status(500).send("서버에러");
   }
 });
-// const token = crypto.randomBytes(20).toString("hex");
-//     const data = { token, mail: user[0].email, ttl: 300 };
-router.post("/sendpassword", async (req, res) => {});
+router.post("/changepassword", async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    const sql = `SELECT * FROM users WHERE email = ?`;
+    const [result] = await db.query(sql, [email]);
+    if (result.length === 0) {
+      return res.status(400).send("존재하지 않는 이메일입니다.");
+    }
+    const hash = await bcrypt.hash(password, 12);
+    const updateSql = `UPDATE users SET password = ? WHERE email = ?`;
+    const [updateResult] = await db.query(updateSql, [hash, email]);
+    console.log(updateResult);
+    res.status(200).send("비밀번호 변경 성공");
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("서버에러");
+  }
+});
 
 router.get("/logout", async (req, res, next) => {
   req.logout((err) => {
@@ -521,8 +537,9 @@ router.get("/upload", async (req, res) => {
 });
 
 router.get("/check", (req, res) => {
-  const user = req.session.passport;
+  const user = req.user;
   console.log("user -> ", user);
+  console.log(`${user[0].nickname}님 로그인 되었습니다.`);
   res.send(user);
 });
 
