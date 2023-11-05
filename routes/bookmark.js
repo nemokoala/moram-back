@@ -12,10 +12,7 @@ router.get("/category", isLoggedIn, async (req, res) => {
 
   try {
     const addSql = "SELECT category FROM categoryBookmarks WHERE userId = ?";
-
-    // 물음표에 해당하는 값들을 배열로 전달
-    const values = [userId];
-    const [results] = await db.query(addSql, values);
+    const [results] = await db.query(addSql, userId);
     let resultArr = results.map((item) => item.category);
     console.log("즐겨찾기 목록 : ", resultArr);
     res.status(200).json({ content: resultArr });

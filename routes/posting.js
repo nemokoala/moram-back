@@ -47,7 +47,6 @@ router.get("/", async (req, res) => {
     const [results] = await db.query(titleSql, queryParams);
     console.log(results);
     const [endId] = await db.query(endIdSql, queryParams);
-    console.log("endsql", endIdSql);
     return res.json({
       content: results,
       endId: endId[0]?.id,
