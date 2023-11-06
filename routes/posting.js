@@ -88,7 +88,7 @@ router.post("/", isLoggedIn, async (req, res) => {
   console.log("Category:", category);
   console.log("Tag:", tag);
   // 카테고리와 태그 값이 유효한지 확인
-  if (!category || !tag)
+  if (!category || tag === "태그 선택")
     return res.status(400).json({ message: "학과, 태그를 모두 선택해주세요." });
   const uniqueCategory = Object.values(categoryList).find((categoryValue) => {
     return categoryValue.includes(category);
