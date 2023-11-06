@@ -54,7 +54,7 @@ exports.generatePassword = async () => {
 
 exports.isAdmin = (req, res, next) => {
   //요청한 사용자가 존재하고 그 역할이 admin일 경우
-  if (req.user && req.user[0].role === "admin") {
+  if (req.session.passport.user[0].role === "admin") {
     next();
   } else {
     res.status(403).send("관리자 권한이 필요합니다. ");
