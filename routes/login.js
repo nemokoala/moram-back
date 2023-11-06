@@ -48,8 +48,9 @@ router.post("/", async (req, res, next) => {
     // done(null, false, { message: '비밀번호가 일치하지 않습니다.' }) 가 처리된 경우
     if (!user) {
       // done()의 3번째 인자 { message: '비밀번호가 일치하지 않습니다.' }가 실행
-      console.log(info.message);
-      return res.status(400).send(info.message);
+      console.log("hi");
+      console.log(info);
+      return res.status(401).send(info);
     }
 
     //? done(null, exUser)가 처리된경우, 즉 로그인이 성공(user가 false가 아닌 경우), passport/index.js로 가서 실행시킨다.
@@ -68,7 +69,12 @@ router.post("/", async (req, res, next) => {
       } else {
         req.session.cookie.maxAge = false;
       }
-      return res.json({ message: "로그인 성공", content: user });
+      return res.status(200).json({
+        code: 200,
+        success: true,
+        message: "로그인 성공",
+        content: user,
+      });
     });
   })(req, res, next); //! 미들웨어 내의 미들웨어에는 콜백을 실행시키기위해 (req, res, next)를 붙인다.
 });

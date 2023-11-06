@@ -27,13 +27,21 @@ passport.use(
       //DB 연결 실패등의 에러
       if (users.length === 0) {
         console.log("사용자가 일치하지 않습니다.");
-        return done(null, false, { message: "사용자가 일치하지 않습니다." });
+        return done(null, false, {
+          code: 401,
+          success: false,
+          message: "사용자가 일치하지 않습니다.",
+        });
       }
       //비밀번호가 일치하지 않을 경우
       const isMatch = await bcrypt.compare(password, users[0].password);
       if (!isMatch) {
         console.log("비밀번호가 일치하지 않습니다.");
-        return done(null, false, { message: "비밀번호가 일치하지 않습니다." });
+        return done(null, false, {
+          code: 401,
+          success: false,
+          message: "비밀번호가 일치하지 않습니다.",
+        });
       }
       //비밀번호가 일치할 경우
       console.log("비밀번호 일치!");
@@ -67,6 +75,19 @@ passport.use(
         console.log("----user: ----", user);
         console.log("----user 끝----");
         console.log("----user.length: ----", user.length);
+
+        //이미 다른 방식으로 가입된 카카오 계정이면 실패
+        const a = 1;
+        // if (user.length > 0 && user[0].platformType !== "kakao")
+        if (a === 1) {
+          console.log("----이미 다른 방식으로 가입된 카카오 계정입니다. ----");
+          return done(null, false, {
+            code: 401,
+            success: false,
+            message: "이미 다른 방식으로 가입된 카카오 계정입니다.",
+          });
+        }
+
         // 이미 가입된 카카오 프로필이면 성공
         if (user.length > 0) {
           console.log("----카카오 계정으로 로그인 시작 ----");

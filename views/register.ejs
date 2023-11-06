@@ -89,17 +89,18 @@
         .addEventListener("submit", function (e) {
           e.preventDefault(); // 폼 제출 기본 동작 방지
 
-          // verificationForm의 email 값을 가져오기
+          // verificationForm의 email, nickname 값을 가져오기
           const email =
             document.getElementById("verificationForm").elements.email.value;
-
-          // email 값을 signupForm의 hidden 필드에 설정
-          document
-            .getElementById("signupForm")
-            .insertAdjacentHTML(
-              "beforeend",
-              `<input type="hidden" name="email" value="${email}" />`
-            );
+          const nickname =
+            document.getElementById("verificationForm").elements.nickname.value;
+          console.log(email, nickname);
+          // email, nickname 값을 signupForm의 hidden 필드에 설정
+          this.insertAdjacentHTML(
+            "beforeend",
+            `<input type="hidden" name="email" value="${email}" />
+       <input type="hidden" name="nickname" value="${nickname}" />`
+          );
 
           // signupForm 제출
           this.submit();

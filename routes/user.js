@@ -568,6 +568,10 @@ router.get("/check", (req, res) => {
   res.send(user[0]);
 });
 
+router.get("/check1", (req, res) => {
+  res.send("check");
+});
+
 router.get("/test", async (req, res) => {
   const certifyResponse = await axios.post(
     "http://localhost:8000/user/certify",
@@ -587,6 +591,7 @@ router.get(
   passport.authenticate("kakao", { failureRedirect: "/user" }),
   (req, res) => {
     console.log("유저정보: ", req.user);
+    console.log("유저정보: ", req.user[0]);
     res.redirect(
       "http://localhost:3000/login-success?user=" +
         JSON.stringify({

@@ -37,6 +37,8 @@ router.get("/", (req, res) => {
 router.post("/", async (req, res) => {
   console.log(req.body);
   const { nickname, email, password } = req.body;
+  console.log("잘받아졌나?");
+  console.log(nickname);
 
   try {
     const sql = "SELECT * FROM users WHERE nickname = ?";
@@ -82,6 +84,9 @@ router.post("/", async (req, res) => {
     });
   }
   if (email !== req.session.email || nickname !== req.session.nickname) {
+    console.log(`인증정보 불일치`);
+    console.log(email, req.session.email, nickname, req.session.nickname);
+    console.log("-------------");
     return res.status(400).json({
       code: 400,
       success: false,
@@ -134,12 +139,19 @@ router.post("/mailsend", async (req, res, next) => {
   console.log("메일 전송");
   console.log(req.body);
   console.log(1);
+  const { email } = req.body;
   try {
+    const usersql = "SELECT * FROM users WHERE email = ?";
+    const [users] = await db.query(usersql, [email]);
+    if (users.length > 0) {
+      return res.status(400).send("이메일이 이미 존재합니다.");
+    }
+
     //랜덤 인증 코드 생성
     const authcode = Math.floor(100000 + Math.random() * 900000).toString();
     let transporter = smtpTransport;
     //메일 설정
-    const { email } = req.body;
+
     if (!validateEmail(email)) {
       return res.status(403).send("유효한 형식의 이메일이 아닙니다.");
     }
