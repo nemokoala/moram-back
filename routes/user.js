@@ -565,7 +565,7 @@ router.get("/check", (req, res) => {
   const user = req.user;
   console.log("user -> ", user);
   console.log(`${user[0].nickname}님 로그인 되었습니다.`);
-  res.send(user);
+  res.send(user[0]);
 });
 
 router.get("/test", async (req, res) => {
