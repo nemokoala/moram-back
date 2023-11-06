@@ -36,9 +36,12 @@
       <label for="code">인증번호:</label><br />
       <input type="text" id="code" name="code" /><br />
       <button type="button" id="verifyCode">인증번호 확인</button><br />
+      <label for="nickname">닉네임 : </label>
+      <input type="text" name="nickname" id="nickname" /><br />
+      <button type="button" id="verifyName">닉네임확인</button>
     </form>
 
-    <form id="signupForm" action="/user/register" method="post">
+    <form id="signupForm" action="/register" method="post">
       <label for="password">비밀번호:</label><br />
       <input type="password" id="password" name="password" /><br /><br />
       <input type="submit" value="회원가입" />
@@ -48,7 +51,7 @@
       $("#sendCode").on("click", function () {
         var Email = $("#email").val();
         console.log(Email);
-        $.post("/user/mailsend", { email: Email })
+        $.post("/register/mailsend", { email: Email })
           .done(function (data) {
             alert("인증 메일이 발송되었습니다.");
           })
@@ -57,11 +60,22 @@
           });
       });
 
+      $("#verifyName").on("click", function () {
+        var nickname = $("#nickname").val();
+        $.post("/register/validatenickname", { nickname: nickname })
+          .done(function (data) {
+            alert("사용 가능한 닉네임입니다.");
+          })
+          .fail(function (err) {
+            alert("사용 불가능한 닉네임입니다.");
+          });
+      });
+
       $("#verifyCode").on("click", function () {
         var Email = $("#email").val();
         var code = $("#code").val();
 
-        $.post("/user/mailverify", { email: Email, authcode: code })
+        $.post("/register/mailverify", { email: Email, authcode: code })
           .done(function (data) {
             alert("인증에 성공했습니다.");
           })
