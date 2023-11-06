@@ -4,6 +4,7 @@ const db = require("../config/db");
 const passport = require("../config/passport");
 const { isLoggedIn } = require("../config/middleware");
 const { categoryList, tagList } = require("../config/categorytagList");
+const { getUploadUrls } = require("../config/aws");
 
 router.get("/test", (req, res) => {
   res.send("test");
@@ -272,6 +273,18 @@ router.get("/search", async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "서버 오류입니다." });
+  }
+});
+
+router.post("/imgurl", isLoggedIn, getUploadUrls, async (req, res) => {
+  try {
+    uploadData = req.uploadData;
+    if (uploadData) {
+      return res.status(200).json({ content: uploadData });
+    }
+  } catch (error) {
+    res.status(500).json({ message: "서버 오류입니다." });
+    console.error(error);
   }
 });
 

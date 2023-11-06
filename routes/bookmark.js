@@ -43,17 +43,16 @@ router.post("/category", isLoggedIn, async (req, res) => {
       return res
         .status(200)
         .json({ message: `${category}가 즐겨찾는 학과에서 제거되었습니다.` });
+    } else {
+      //데이터가 없을경우 추가 작업실행
+      const addSql =
+        "INSERT INTO categoryBookmarks (userId, category) VALUES (?, ?)";
+      const values = [userId, category];
+      const [results] = await db.query(addSql, values);
+      res
+        .status(200)
+        .json({ message: `${category}가 즐겨찾는 학과에 추가되었습니다.` });
     }
-
-    //데이터가 없을경우 추가 작업실행
-    const addSql =
-      "INSERT INTO categoryBookmarks (userId, category)\
-       VALUES (?, ?)";
-    const values = [userId, category];
-    const [results] = await db.query(addSql, values);
-    res
-      .status(200)
-      .json({ message: `${category}가 즐겨찾는 학과에 추가되었습니다.` });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "서버 오류입니다." });
