@@ -3,6 +3,8 @@ const router = express.Router();
 const db = require("../config/db");
 const passport = require("../config/passport");
 const { isLoggedIn } = require("../config/middleware");
+const { categoryList, tagList } = require("../views/categorytagList");
+
 
 router.get("/test", (req, res) => {
   res.send("test");
@@ -82,6 +84,13 @@ router.get("/:id", async (req, res) => {
 // 새로운 게시글 추가
 router.post("/", isLoggedIn, async (req, res) => {
   const { title, content, img1Url, img2Url, img3Url, category, tag } = req.body;
+    // 카테고리와 태그 값이 유효한지 확인
+    if (!Object.keys(categoryList).includes(category)) {
+      return res.status(400).json({ message: "유효하지 않은 카테고리입니다." });
+    }
+    if (!tagList.includes(tag)) {
+      return res.status(400).json({ message: "유효하지 않은 태그입니다." });
+    }
   // 여기서 세션으로부터 userId와 nickname을 가져옵니다.
   console.log("포스트", req.session.passport);
   const { nickname } = req.session.passport.user[0];
@@ -114,6 +123,15 @@ router.post("/", isLoggedIn, async (req, res) => {
 
 // 특정 게시글 업데이트
 router.put("/:id", isLoggedIn, async (req, res) => {
+  const { title, content, img1Url, img2Url, img3Url, category, tag } = req.body;
+
+  // 카테고리와 태그 값이 유효한지 확인
+  if (!Object.keys(categoryList).includes(category)) {
+    return res.status(400).json({ message: "유효하지 않은 카테고리입니다." });
+  }
+  if (!tagList.includes(tag)) {
+    return res.status(400).json({ message: "유효하지 않은 태그입니다." });
+  }
   // 로그인한 사용자의 ID를 가져옵니다.
   const loginUserId = req.session.passport.user[0].id;
 
@@ -179,6 +197,8 @@ router.delete("/:id", isLoggedIn, async (req, res) => {
 });
 
 router.post("/report/:postId", isLoggedIn, async (req, res) => {
+  console.log(req);
+  
   try {
     const { nickname } = req.session.passport.user[0];
     const userId = req.session.passport.user[0].id; // 로그인한 사용자의 ID
@@ -245,3 +265,5 @@ router.get("/search", async (req, res) => {
 });
 
 module.exports = router;
+
+
