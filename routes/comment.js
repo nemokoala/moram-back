@@ -32,8 +32,8 @@ router.post("/:postId", isLoggedIn, async (req, res) => {
     const content = req.body.content;
     const postId = Number(req.params.postId); //해당 댓글의 포스팅 id
     const parentId = Number(req.query.parentId) || null; //대댓글 시 부모 댓글 id
-    const userId = Number(req.user[0].id);
-    const userNickname = req.user[0].nickname;
+    const userId = Number(req.session.passport.user[0].id);
+    const userNickname = req.session.passport.user[0].nickname;
 
     const addSql =
       "INSERT INTO comments ( userId, postId, nickname, content, writeTime, parentId) VALUES (?, ?, ?, ?, ?, ?)";
@@ -65,7 +65,7 @@ router.post("/:postId", isLoggedIn, async (req, res) => {
 router.delete("/:id", isLoggedIn, async (req, res) => {
   // 댓글 삭제 기능
   const id = req.params.id; //URl에서 추출된 매개변수 값
-  const userId = req.user[0].id;
+  const userId = req.session.passport.user[0].id;
 
   try {
     const commentSql = "SELECT * FROM comments WHERE id = ?";

@@ -13,6 +13,7 @@ const userRoutes = require("./user");
 const postingRoutes = require("./posting");
 const commentRoutes = require("./comment");
 const adminRoutes = require("./admin");
+const noticeRoutes = require("./notice");
 const likeRoutes = require("./like");
 const bookmarkRoutes = require("./bookmark");
 const gptRoutes = require("./gpt");
@@ -42,6 +43,7 @@ app.use("/posting", postingRoutes);
 app.use("/comment", commentRoutes);
 app.use("/like", likeRoutes);
 app.use("/admin", isAdmin, adminRoutes);
+app.use("/notice", noticeRoutes);
 app.use("/bookmark", bookmarkRoutes);
 app.use("/gpt", gptRoutes);
 
