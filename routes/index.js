@@ -12,6 +12,7 @@ const passport = require("../config/passport");
 const session = require("express-session");
 const userRoutes = require("./user");
 const registerRoutes = require("./register");
+const loginRoutes = require("./login");
 const postingRoutes = require("./posting");
 const commentRoutes = require("./comment");
 const adminRoutes = require("./admin");
@@ -43,6 +44,7 @@ app.use("/comment", commentRoutes);
 app.use("/like", likeRoutes);
 app.use("/admin", isAdmin, adminRoutes);
 app.use("/register", registerRoutes);
+app.use("/login", loginRoutes);
 
 app.get("/hi", (req, res) => {
   res.status(200).send(`hello`);

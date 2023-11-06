@@ -33,6 +33,7 @@ router.get("/", (req, res) => {
   res.render("register");
 });
 
+//회원가입페이지
 router.post("/", async (req, res) => {
   console.log(req.body);
   const { nickname, email, password } = req.body;
