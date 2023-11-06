@@ -3,7 +3,7 @@ const router = express.Router();
 const db = require("../config/db");
 const passport = require("../config/passport");
 const { isLoggedIn } = require("../config/middleware");
-const { categoryList, tagList } = require("../views/categorytagList");
+const { categoryList, tagList } = require("../config/categorytagList");
 
 
 router.get("/test", (req, res) => {
@@ -84,11 +84,13 @@ router.get("/:id", async (req, res) => {
 // 새로운 게시글 추가
 router.post("/", isLoggedIn, async (req, res) => {
   const { title, content, img1Url, img2Url, img3Url, category, tag } = req.body;
+  console.log('Category:', category);
+  console.log('Tag:', tag);
     // 카테고리와 태그 값이 유효한지 확인
     if (!Object.keys(categoryList).includes(category)) {
       return res.status(400).json({ message: "유효하지 않은 카테고리입니다." });
     }
-    if (!tagList.includes(tag)) {
+    if (!tag.every(t => tagList.includes(t))) {
       return res.status(400).json({ message: "유효하지 않은 태그입니다." });
     }
   // 여기서 세션으로부터 userId와 nickname을 가져옵니다.
