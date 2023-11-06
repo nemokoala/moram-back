@@ -14,7 +14,7 @@ router.get("/allusers", isLoggedIn, isAdmin, async (req, res) => {
     const [allUser] = await db.query(allUserSql);
     res.json(allUser);
   } catch (error) {
-    res.status(500).send(err);
+    res.status(500).send(error);
   }
 });
 
