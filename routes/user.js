@@ -31,11 +31,12 @@ const requireLogin = (req, res, next) => {
 //   return useridRegex.test(userid);
 // };
 
+// Email 유효성 검사 함수, 형식에 맞으면 true 리턴 틀리면 false 리턴
 const validateEmail = (email) => {
   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   return emailRegex.test(email);
 };
-
+// password 유효성 검사 함수, 형식에 맞으면 true 리턴 틀리면 false 리턴
 const validatePassword = (password) => {
   const passwordRegex =
     /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
@@ -311,20 +312,44 @@ router.get("/reset/:token", async (req, res) => {
     res.status(500).send("서버에러");
   }
 });
-router.post("/changepassword", async (req, res) => {
-  const { email, password } = req.body;
+router.post("/changepw", async (req, res) => {
+  const { email, prepw, newpw } = req.body;
 
   try {
-    const sql = `SELECT * FROM users WHERE email = ?`;
-    const [result] = await db.query(sql, [email]);
-    if (result.length === 0) {
-      return res.status(400).send("존재하지 않는 이메일입니다.");
+    if (email !== req.user[0].email) {
+      return res.status(400).json({
+        code: 400,
+        success: false,
+        message: "현재 로그인세션과 이메일이 일치하지않습니다.",
+      });
     }
-    const hash = await bcrypt.hash(password, 12);
+    if (!validatePassword(newpw)) {
+      return res.status(400).json({
+        code: 400,
+        success: false,
+        message: "유효한 형식의 비밀번호가 아닙니다.",
+      });
+    }
+
+    const sql = `SELECT * FROM users WHERE email = ?`;
+    const [user] = await db.query(sql, [email]);
+    if (bcrypt.compareSync(prepw, user[0].password) === false) {
+      return res.status(400).json({
+        code: 400,
+        success: false,
+        message: "현재 비밀번호가 일치하지않습니다.",
+      });
+    }
+
+    const hash = await bcrypt.hash(newpw, 12);
     const updateSql = `UPDATE users SET password = ? WHERE email = ?`;
     const [updateResult] = await db.query(updateSql, [hash, email]);
     console.log(updateResult);
-    res.status(200).send("비밀번호 변경 성공");
+    res.status(200).json({
+      code: 200,
+      success: true,
+      message: "비밀번호가 변경되었습니다.",
+    });
   } catch (err) {
     console.log(err);
     res.status(500).send("서버에러");
