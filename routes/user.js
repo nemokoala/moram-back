@@ -586,19 +586,24 @@ router.get("/test", async (req, res) => {
 
 router.get("/kakao", passport.authenticate("kakao"));
 
-router.get(
-  "/kakao/callback",
-  passport.authenticate("kakao", { failureRedirect: "/user" }),
-  (req, res) => {
-    console.log("유저정보: ", req.user);
-    console.log("유저정보: ", req.user[0]);
-    res.redirect(
-      "http://localhost:3000/login-success?user=" +
-        JSON.stringify({
-          email: req.user[0].email,
-          nickname: req.user[0].nickname,
-        })
-    );
-  }
-);
+router.get("/kakao/callback", (req, res, next) => {
+  passport.authenticate("kakao", (err, user, info) => {
+    // passport-kakao 전략 done 함수의 파라미터가 여기 콜백 함수의 인자로 전달된다.
+    if (err) {
+      return next(err);
+    }
+    if (!user) {
+      console.log(info);
+      return res.json(info);
+    }
+
+    // 회원가입된 상태일 경우, 로그인 세션을 생성한다.
+    return req.login(user, (error) => {
+      if (error) {
+        next(error);
+      }
+      res.redirect(`http://localhost:8000/user`);
+    });
+  })(req, res, next); // 미들웨어 내의 미들웨어에는 호출 별도로 진행
+});
 module.exports = router;
