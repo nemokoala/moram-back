@@ -609,15 +609,4 @@ router.get("/kakao/callback", (req, res, next) => {
   })(req, res, next); // 미들웨어 내의 미들웨어에는 호출 별도로 진행
 });
 
-function returnUser(user) {
-  const userData = {
-    id: user.id,
-    nickname: user.nickname,
-    platformType: user.platformType,
-    email: user.email,
-    gptCount: user.gptCount,
-    role: user.role,
-  };
-  return userData;
-}
 module.exports = router;

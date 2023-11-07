@@ -16,6 +16,7 @@ const {
 } = require("../config/middleware");
 const { isloggedin, isnotloggedin } = require("../config/middleware");
 const { type } = require("os");
+const { returnUser } = require("../config/middleware");
 router.use(express.urlencoded({ extended: true }));
 router.use(express.json());
 
@@ -73,7 +74,7 @@ router.post("/", async (req, res, next) => {
         code: 200,
         success: true,
         message: "로그인 성공",
-        content: user,
+        content: returnUser(user[0]),
       });
     });
   })(req, res, next); //! 미들웨어 내의 미들웨어에는 콜백을 실행시키기위해 (req, res, next)를 붙인다.
@@ -153,6 +154,17 @@ router.post("/forgotpw", async (req, res) => {
 router.get("/reset/:token", async (req, res) => {
   const { token } = req.params;
   try {
+    function returnUser(user) {
+      const userData = {
+        id: user.id,
+        nickname: user.nickname,
+        platformType: user.platformType,
+        email: user.email,
+        gptCount: user.gptCount,
+        role: user.role,
+      };
+      return userData;
+    }
     const sql = `SELECT * FROM pwdVerification WHERE token = ? AND expiresAt > NOW()`;
     const [result] = await db.query(sql, [token]);
     const newPassword = result[0].pwd;

@@ -60,3 +60,15 @@ exports.isAdmin = (req, res, next) => {
     res.status(403).send("관리자 권한이 필요합니다. ");
   }
 };
+
+exports.returnUser = (user) => {
+  const userData = {
+    id: user.id,
+    nickname: user.nickname,
+    platformType: user.platformType,
+    email: user.email,
+    gptCount: user.gptCount,
+    role: user.role,
+  };
+  return userData;
+};

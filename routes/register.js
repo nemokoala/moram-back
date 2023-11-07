@@ -61,13 +61,14 @@ router.post("/", async (req, res) => {
       message: "이메일 인증을 해주세요.",
     });
   }
-  if (!req.session.nickname) {
-    return res.status(400).json({
-      code: 400,
-      success: false,
-      message: "닉네임 인증을 해주세요.",
-    });
-  }
+  // if (!req.session.nickname) {
+  //   console(req.session.nickname);
+  //   return res.status(400).json({
+  //     code: 400,
+  //     success: false,
+  //     message: "닉네임 인증을 해주세요.",
+  //   });
+  // }
   console.log("회원가입중2");
   if (!validateEmail(email)) {
     return res.status(400).json({
@@ -83,7 +84,7 @@ router.post("/", async (req, res) => {
       message: "비밀번호는 8자 이상, 영문자, 숫자, 특수문자를 포함해야 합니다.",
     });
   }
-  if (email !== req.session.email || nickname !== req.session.nickname) {
+  if (email !== req.session.email) {
     console.log(`인증정보 불일치`);
     console.log(email, req.session.email, nickname, req.session.nickname);
     console.log("-------------");
