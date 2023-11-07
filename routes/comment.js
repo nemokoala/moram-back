@@ -19,7 +19,7 @@ router.get("/:postId", async (req, res) => {
   try {
     const allSql = "SELECT * FROM comments WHERE postId = ?";
     const [results] = await db.query(allSql, [postId]);
-    res.json(results);
+    res.status(200).json({ content: results });
   } catch (error) {
     res.status(500).json({ message: "서버 에러" });
     console.error(error);
@@ -73,7 +73,9 @@ router.delete("/:id", isLoggedIn, async (req, res) => {
     //삭제하려는 댓글 레코드
 
     if (comments.length === 0) {
-      res.status(404).send("해당하는 댓글이 더 이상 존재하지 않습니다.");
+      res
+        .status(404)
+        .json({ message: "해당하는 댓글이 더 이상 존재하지 않습니다." });
       return;
     }
 
@@ -83,9 +85,11 @@ router.delete("/:id", isLoggedIn, async (req, res) => {
     if (userId === commentUserId) {
       const deleteSql = "DELETE FROM comments WHERE id = ?";
       const [results] = await db.query(deleteSql, id);
-      res.status(200).send("댓글이 삭제되었습니다.");
+      res.status(200).json({ message: "댓글이 삭제되었습니다." });
     } else {
-      res.status(403).send("댓글을 삭제할 권한이 존재하지 않습니다.");
+      res
+        .status(403)
+        .json({ message: "댓글을 삭제할 권한이 존재하지 않습니다." });
     }
   } catch (error) {
     res.status(500).json({ message: error.message || "댓글 삭제 서버 에러" });

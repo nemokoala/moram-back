@@ -11,7 +11,7 @@ router.get("/user", isLoggedIn, async (req, res) => {
     const allSql =
       "SELECT id, title, writeTime, updateTime FROM notices WHERE hide IS NULL";
     const [results] = await db.query(allSql);
-    return res.json(results);
+    return res.status(200).json({ content: results });
   } catch (error) {
     res.status(500).json({ message: "db에러" });
     console.error(error);
@@ -29,7 +29,7 @@ router.get("/user/:id", isLoggedIn, async (req, res) => {
         .status(404)
         .json({ message: "해당 공지를 찾을 수 없습니다. " });
     }
-    res.json(results);
+    res.status(200).json({ content: results });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "서버 에러" });
@@ -42,7 +42,7 @@ router.get("/admin", isLoggedIn, isAdmin, async (req, res) => {
     const allSql =
       "SELECT id, title, writeTime, updateTime, nickname, hide FROM notices";
     const [results] = await db.query(allSql);
-    res.json(results);
+    res.status(200).json({ content: results });
   } catch (error) {
     res.status(500).json({ message: "db에러" });
     console.error(error);
@@ -60,7 +60,7 @@ router.get("/admin/:id", isLoggedIn, isAdmin, async (req, res) => {
         .status(404)
         .json({ message: "해당 공지를 찾을 수 없습니다. " });
     }
-    res.json(results);
+    res.status(200).json({ content: results });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "서버 에러" });
@@ -104,10 +104,12 @@ router.delete("/:id", isLoggedIn, isAdmin, async (req, res) => {
     const [results] = await db.query(deleteSql, [noticeId]);
 
     if (results.length === 0) {
-      res.status(404).send("해당하는 공지글이 더 이상 존재하지 않습니다.");
+      res
+        .status(404)
+        .json({ message: "해당하는 공지글이 더 이상 존재하지 않습니다." });
       return;
     }
-    res.status(200).send("공지글이 삭제되었습니다.");
+    res.status(200).json({ message: "공지글이 삭제되었습니다." });
   } catch (error) {
     res.status(500).json({ message: "서버 에러" });
     console.error(error);
@@ -128,7 +130,9 @@ router.put("/:id", isLoggedIn, isAdmin, async (req, res) => {
 
     //해당 글이 존재하는지
     if (selected.length === 0) {
-      res.status(404).send("해당하는 공지글이 더 이상 존재하지 않습니다. ");
+      res
+        .status(404)
+        .json({ message: "해당하는 공지글이 더 이상 존재하지 않습니다. " });
       return;
     }
 

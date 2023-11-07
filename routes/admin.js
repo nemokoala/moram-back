@@ -12,9 +12,9 @@ router.get("/allusers", isLoggedIn, isAdmin, async (req, res) => {
       //hitDate (최근 로그인 시간, 계정상태..휴먼 , 탈퇴 게정인지) 추가
       "SELECT * FROM users";
     const [allUser] = await db.query(allUserSql);
-    res.json(allUser);
+    res.status(200).json({ content: allUser });
   } catch (error) {
-    res.status(500).send(error);
+    res.status(500).json({ message: "서버 오류" });
     console.error(error);
   }
 });
@@ -26,7 +26,7 @@ router.get("/allposts", isLoggedIn, isAdmin, async (req, res) => {
     const allPostSql =
       "SELECT id, nickname, title, writeTime, tag, category FROM postings";
     const [results] = await db.query(allPostSql);
-    res.json(results);
+    res.status(200).json({ content: results });
   } catch (error) {
     res.status(500).json({ message: "서버 에러 " });
     console.error(error);
@@ -44,7 +44,7 @@ router.get("/allposts/:id", isLoggedIn, isAdmin, async (req, res) => {
         .status(404)
         .json({ message: "해당 게시글을 찾을 수 없습니다. " });
     }
-    res.json(results[0]);
+    res.json({ content: results[0] });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "서버 오류입니다. " });
