@@ -137,13 +137,21 @@ router.post("/", isLoggedIn, async (req, res) => {
 router.put("/:id", isLoggedIn, async (req, res) => {
   const { title, content, img1Url, img2Url, img3Url, category, tag } = req.body;
 
-  // 카테고리와 태그 값이 유효한지 확인
-  if (!Object.keys(categoryList).includes(category)) {
-    return res.status(400).json({ message: "유효하지 않은 카테고리입니다." });
-  }
-  if (!tag.every((t) => tagList.includes(t))) {
-    return res.status(400).json({ message: "유효하지 않은 태그입니다." });
-  }
+// 카테고리와 태그 값이 유효한지 확인
+if (!category || tag === "")
+return res.status(400).json({ message: "학과, 태그를 모두 선택해주세요." });
+const uniqueCategory = Object.values(categoryList).find((categoryValue) => {
+return categoryValue.includes(category);
+});
+if (!uniqueCategory.includes(category)) {
+return res.status(400).json({ message: "유효하지 않은 카테고리입니다." });
+}
+const uniqueTag = tagList.find((tagValue) => {
+return tagValue.includes(tag);
+});
+if (!uniqueTag.includes(tag)) {
+return res.status(400).json({ message: "유효하지 않은 태그입니다." });
+}
   // 로그인한 사용자의 ID를 가져옵니다.
   const loginUserId = req.session.passport.user[0].id;
 
