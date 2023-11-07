@@ -44,11 +44,11 @@ router.post("/", async (req, res) => {
     const sql = "SELECT * FROM users WHERE nickname = ?";
     const [user] = await db.query(sql, [nickname]);
     if (user.length > 0) {
-      return res.status(400).send("닉네임이 이미 존재합니다.");
+      return res.status(400).json({ message: "닉네임이 이미 존재합니다." });
     }
   } catch (err) {
     console.log(err);
-    res.status(500).send("서버에러");
+    res.status(500).json({ message: "서버에러" });
   }
 
   console.log("회원가입중1------");
@@ -99,16 +99,16 @@ router.post("/", async (req, res) => {
     const usersql = "SELECT * FROM users WHERE email = ?";
     const [users] = await db.query(usersql, [email]);
     if (users.length > 0) {
-      return res.status(400).send("이메일이 이미 존재합니다.");
+      return res.status(400).json("이메일이 이미 존재합니다.");
     }
 
     const sql = `INSERT INTO users (platformType, nickname, email, password) VALUES (?, ?, ?, ?)`;
     hash = await bcrypt.hash(password, 12);
     await db.query(sql, ["local", nickname, email, hash]);
-    res.status(200).send("회원가입 성공");
+    res.status(200).json("회원가입 성공");
   } catch (err) {
     console.log(err);
-    res.status(500).send(err);
+    res.status(500).json({ message: `${err}` });
   }
 });
 
@@ -132,11 +132,11 @@ router.post("/validatenickname", async (req, res, next) => {
     });
   } catch (err) {
     console.log(err);
-    res.status(500).send("서버에러");
+    res.status(500).json({ message: "서버에러" });
   }
 });
 
-router.post("/mailsend", async (req, res, next) => {
+router.post("/mailjson", async (req, res, next) => {
   console.log("메일 전송");
   console.log(req.body);
   console.log(1);
@@ -145,7 +145,7 @@ router.post("/mailsend", async (req, res, next) => {
     const usersql = "SELECT * FROM users WHERE email = ?";
     const [users] = await db.query(usersql, [email]);
     if (users.length > 0) {
-      return res.status(400).send("이메일이 이미 존재합니다.");
+      return res.status(400).json({ message: "이메일이 이미 존재합니다." });
     }
 
     //랜덤 인증 코드 생성
@@ -154,13 +154,15 @@ router.post("/mailsend", async (req, res, next) => {
     //메일 설정
 
     if (!validateEmail(email)) {
-      return res.status(403).send("유효한 형식의 이메일이 아닙니다.");
+      return res
+        .status(403)
+        .json({ message: "유효한 형식의 이메일이 아닙니다." });
     }
     const searchSql = `SELECT * FROM users WHERE email = ?`;
     const [user] = await db.query(searchSql, [email]);
 
     if (user.length > 0) {
-      return res.status(403).send("이미 존재하는 이메일입니다.");
+      return res.status(403).json({ message: "이미 존재하는 이메일입니다." });
     }
 
     let mailOptions = {
@@ -170,17 +172,17 @@ router.post("/mailsend", async (req, res, next) => {
       text: `오른쪽 숫자 6자리를 입력해주세요 : ${authcode}`,
     };
     console.log(mailOptions);
-    await transporter.sendMail(mailOptions);
+    await transporter.jsonMail(mailOptions);
     console.log("메일 발송 성공");
 
     //db에 인증 정보 저장 (이메일, 인증코드, 만료시간)
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
     const sql = `INSERT INTO emailVerification (email, authcode, expiresAt) VALUES (?, ?, ?)`;
     db.query(sql, [email, authcode, expiresAt]);
-    res.status(200).send("메일발신성공");
+    res.status(200).json({ message: "메일발신성공" });
   } catch (err) {
     console.error(err);
-    res.status(500).send("서버에러");
+    res.status(500).json({ message: "서버에러" });
     next(err);
   }
 });
@@ -192,19 +194,19 @@ router.post("/mailverify", async (req, res, next) => {
     const sql = `SELECT * FROM emailVerification WHERE email = ? AND authcode = ? AND expiresAt > NOW()`;
     const [result] = await db.query(sql, [email, authcode]);
     if (result.length === 0) {
-      return res.status(400).send("인증코드가 일치하지 않습니다.");
+      return res.status(400).json({ message: "인증코드가 일치하지 않습니다." });
     }
     //만약 인증코드가 일치하다면, 세션에 이메일 저장
     req.session.email = email;
-    res.status(200).send("인증코드가 일치합니다.");
+    res.status(200).json({ message: "인증코드가 일치합니다." });
   } catch (err) {
     console.log(err);
-    return res.status(500).send("서버에러");
+    return res.status(500).json({ message: "서버에러" });
   }
 });
 
 router.get("/test", (req, res) => {
-  res.send("test");
+  res.json("test");
 });
 
 module.exports = router;
