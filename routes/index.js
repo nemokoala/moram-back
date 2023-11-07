@@ -37,6 +37,12 @@ app.use(
     secret: process.env.SESSION_SECRET_KEY,
     resave: false,
     saveUninitialized: true,
+    cookie: {
+      //secure: true, // HTTPS를 통해서만 쿠키가 전송되도록 설정
+      //ecure: true, // HTTPS를 통해서만 쿠키가 전송되도록 설정
+      httpOnly: true, // 클라이언트 JavaScript가 쿠키를 접근하지 못하도록 설정
+      sameSite: "none",
+    },
   })
 );
 app.use(passport.initialize());
