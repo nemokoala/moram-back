@@ -602,7 +602,13 @@ router.get("/kakao/callback", (req, res, next) => {
       if (error) {
         next(error);
       }
-      res.redirect(`http://localhost:8000/user`);
+      res.redirect(
+        "http://localhost:3000/login-success?user=" +
+          JSON.stringify({
+            email: req.user[0].email,
+            nickname: req.user[0].nickname,
+          })
+      );
     });
   })(req, res, next); // 미들웨어 내의 미들웨어에는 호출 별도로 진행
 });
