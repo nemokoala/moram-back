@@ -30,9 +30,9 @@ const validatePassword = (password) => {
   return passwordRegex.test(password);
 };
 
-router.get("/", (req, res) => {
-  res.render("login");
-});
+// router.get("/", (req, res) => {
+//   res.render("login");
+// });
 
 router.post("/", async (req, res, next) => {
   //? local로 실행이 되면 localstrategy.js를 찾아 실행한다.
@@ -48,7 +48,7 @@ router.post("/", async (req, res, next) => {
     // done(null, false, { message: '비밀번호가 일치하지 않습니다.' }) 가 처리된 경우
     if (!user) {
       // done()의 3번째 인자 { message: '비밀번호가 일치하지 않습니다.' }가 실행
-      console.log("hi");
+      console.log("hi.");
       console.log(info);
       return res.status(401).send(info);
     }

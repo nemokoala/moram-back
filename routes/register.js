@@ -29,9 +29,9 @@ const validatePassword = (password) => {
     /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
   return passwordRegex.test(password);
 };
-router.get("/", (req, res) => {
-  res.render("register");
-});
+// router.get("/", (req, res) => {
+//   res.render("register");
+// });
 
 //회원가입페이지
 router.post("/", async (req, res) => {

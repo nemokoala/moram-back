@@ -396,9 +396,9 @@ router.post("/ex", async (req, res) => {
   }
 });
 
-router.get("/certify", (req, res) => {
-  res.render("certify");
-});
+// router.get("/certify", (req, res) => {
+//   res.render("certify");
+// });
 
 router.post("/certify", async (req, res) => {
   console.log(req.body);
