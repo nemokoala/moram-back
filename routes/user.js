@@ -562,14 +562,6 @@ router.get("/upload", async (req, res) => {
 });
 
 router.get("/check", (req, res) => {
-  const user = req.user;
-  console.log("user -> ", user);
-  console.log(`${user[0].nickname}님 로그인 되었습니다.`);
-  res.send(user[0]);
-});
-
-router.get("/check1", (req, res) => {
-  res.send("check");
   const user = req.session?.passport?.user || null;
   console.log("user -> ", user);
   if (user) return res.status(200).send(returnUser(user[0]));
@@ -616,4 +608,16 @@ router.get("/kakao/callback", (req, res, next) => {
     });
   })(req, res, next); // 미들웨어 내의 미들웨어에는 호출 별도로 진행
 });
+
+function returnUser(user) {
+  const userData = {
+    id: user.id,
+    nickname: user.nickname,
+    platformType: user.platformType,
+    email: user.email,
+    gptCount: user.gptCount,
+    role: user.role,
+  };
+  return userData;
+}
 module.exports = router;
