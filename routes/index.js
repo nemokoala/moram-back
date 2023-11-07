@@ -21,6 +21,7 @@ const profileRoutes = require("./profile");
 const bookmarkRoutes = require("./bookmark");
 const gptRoutes = require("./gpt");
 const { authenticateUser, isAdmin } = require("../config/middleware");
+const { NONAME } = require("dns");
 app.use(
   cors({
     origin: [
@@ -43,6 +44,7 @@ app.use(
     cookie: {
       //secure: true, // HTTPS를 통해서만 쿠키가 전송되도록 설정
       httpOnly: true, // 클라이언트 JavaScript가 쿠키를 접근하지 못하도록 설정
+      sameSite: "None",
     },
   })
 );
