@@ -51,7 +51,7 @@ router.get("/admin", isLoggedIn, isAdmin, async (req, res) => {
 
 //2.2 관리자: 특정 공지 조회
 router.get("/admin/:id", isLoggedIn, isAdmin, async (req, res) => {
-  const noticesId = req.params.id;
+  const noticesId = Number(req.params.id);
   try {
     const getSql = "SELECT * FROM notices  WHERE id = ?";
     const [results] = await db.query(getSql, [noticesId]);
