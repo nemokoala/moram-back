@@ -40,6 +40,15 @@ app.use(
     secret: process.env.SESSION_SECRET_KEY,
     resave: false,
     saveUninitialized: true,
+    cookie: {
+      secure: true, // HTTPS를 통해서만 쿠키가 전송되도록 설정
+      httpOnly: true, // 클라이언트 JavaScript가 쿠키를 접근하지 못하도록 설정
+      domain: "example.com", // 쿠키의 도메인을 설정
+      path: "/", // 쿠키의 경로를 설정
+      expires: new Date(Date.now() + 30 * 86400 * 1000), // 쿠키의 만료 시간 설정
+      // 쿠키 만료 시간을 현재 시간으로부터 30일 후로 설정
+      sameSite: "strict", // CSRF 공격을 방지하기 위한 설정
+    },
   })
 );
 app.use(passport.initialize());
