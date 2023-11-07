@@ -23,7 +23,10 @@ const gptRoutes = require("./gpt");
 const { authenticateUser, isAdmin } = require("../config/middleware");
 app.use(
   cors({
-    origin: true,
+    origin: [
+      "http://localhost:3000",
+      "https://moram-front-git-main-sanghee01.vercel.app",
+    ],
     credentials: true,
   })
 );
