@@ -8,6 +8,7 @@ const ejs = require("ejs");
 const axios = require("axios");
 const passport = require("../config/passport");
 const fs = require("fs");
+const { returnUser } = require("../config/middleware");
 const smtpTransport = require("../config/email");
 const {
   generatePassword,
