@@ -17,8 +17,6 @@ const {
 } = require("../config/middleware");
 const { isloggedin, isnotloggedin } = require("../config/middleware");
 const { type } = require("os");
-router.use(express.urlencoded({ extended: true }));
-router.use(express.json());
 
 const requireLogin = (req, res, next) => {
   if (req.session.user) {
