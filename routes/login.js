@@ -31,9 +31,9 @@ const validatePassword = (password) => {
   return passwordRegex.test(password);
 };
 
-// router.get("/", (req, res) => {
-//   res.render("login");
-// });
+router.get("/", (req, res) => {
+  res.render("login");
+});
 
 router.post("/", async (req, res, next) => {
   //? local로 실행이 되면 localstrategy.js를 찾아 실행한다.
@@ -70,6 +70,7 @@ router.post("/", async (req, res, next) => {
       } else {
         req.session.cookie.maxAge = false;
       }
+      res.cookie("user", user);
       return res.status(200).json({
         code: 200,
         success: true,
@@ -153,6 +154,7 @@ router.post("/forgotpw", async (req, res) => {
 
 router.get("/reset/:token", async (req, res) => {
   const { token } = req.params;
+  console.log(token);
   try {
     function returnUser(user) {
       const userData = {
@@ -167,6 +169,7 @@ router.get("/reset/:token", async (req, res) => {
     }
     const sql = `SELECT * FROM pwdVerification WHERE token = ? AND expiresAt > NOW()`;
     const [result] = await db.query(sql, [token]);
+    console.log(result);
     const newPassword = result[0].pwd;
     console.log(`newpassword:${newPassword}`);
     const updateSql = `UPDATE users SET password = ? WHERE email = ?`;
