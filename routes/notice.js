@@ -39,7 +39,8 @@ router.get("/user/:id", isLoggedIn, async (req, res) => {
 //2.1 관리자: 전체 공지 조회
 router.get("/admin", isLoggedIn, isAdmin, async (req, res) => {
   try {
-    const allSql = "SELECT id, title, writeTime, nickname, hide FROM notices";
+    const allSql =
+      "SELECT id, title, writeTime, updateTime, nickname, hide FROM notices";
     const [results] = await db.query(allSql);
     res.json(results);
   } catch (error) {
@@ -97,10 +98,10 @@ router.post("/", isLoggedIn, isAdmin, async (req, res) => {
 
 //4. 관리자 공지 삭제 기능
 router.delete("/:id", isLoggedIn, isAdmin, async (req, res) => {
-  const noticesId = Number(req.params.id);
+  const noticeId = Number(req.params.id);
   try {
     const deleteSql = "DELETE FROM notices WHERE id=? ";
-    const [results] = await db.query(deleteSql, [noticesId]);
+    const [results] = await db.query(deleteSql, [noticeId]);
 
     if (results.length === 0) {
       res.status(404).send("해당하는 공지글이 더 이상 존재하지 않습니다.");
@@ -113,4 +114,48 @@ router.delete("/:id", isLoggedIn, isAdmin, async (req, res) => {
   }
 });
 
+//5. 관리자 공지 수정 기능
+router.put("/:id", isLoggedIn, isAdmin, async (req, res) => {
+  const updateTime = new Date();
+  const noticeId = Number(req.params.id);
+  const { title, content } = req.body;
+  const adminId = Number(req.session.passport.user[0].id);
+  const adminNickname = req.session.passport.user[0].nickname;
+
+  try {
+    const selectSql = "SELECT * FROM notices WHERE id = ?";
+    const [selected] = await db.query(selectSql, noticeId);
+
+    //해당 글이 존재하는지
+    if (selected.length === 0) {
+      res.status(404).send("해당하는 공지글이 더 이상 존재하지 않습니다. ");
+      return;
+    }
+
+    //글이 존재한다면 수정하기
+    const updateSql =
+      "UPDATE notices SET userId = ?, title = ?, content = ?, updateTime =?, nickname = ? WHERE id = ?";
+    const values = [
+      adminId,
+      title,
+      content,
+      updateTime,
+      adminNickname,
+      noticeId,
+    ];
+
+    const [results] = await db.query(updateSql, values);
+    res.status(200).json({
+      message: "공지 업데이트 완료.",
+      comment: {
+        title,
+        content,
+        adminNickname,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "공지 업데이트 서버 에러 " });
+  }
+});
 module.exports = router;

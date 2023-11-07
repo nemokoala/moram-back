@@ -24,7 +24,7 @@ router.get("/allusers", isLoggedIn, isAdmin, async (req, res) => {
 router.get("/allposts", isLoggedIn, isAdmin, async (req, res) => {
   try {
     const allPostSql =
-      "SELECT id, nickname title, writeTime, tag, category FROM postings";
+      "SELECT id, nickname, title, writeTime, tag, category FROM postings";
     const [results] = await db.query(allPostSql);
     res.json(results);
   } catch (error) {
