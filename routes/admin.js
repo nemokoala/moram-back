@@ -10,7 +10,7 @@ router.get("/allusers", isLoggedIn, isAdmin, async (req, res) => {
   try {
     const allUserSql =
       //hitDate (최근 로그인 시간, 계정상태..휴먼 , 탈퇴 게정인지) 추가
-      "SELECT id, nickname, role, email, regDate, gptCount FROM users";
+      "SELECT * FROM users";
     const [allUser] = await db.query(allUserSql);
     res.json(allUser);
   } catch (error) {
