@@ -13,9 +13,9 @@ router.get("/:postId", isLoggedIn, async (req, res) => {
     const [rows] = await db.query(checkSql, [userId, postId]);
 
     if (rows.length > 0) {
-      res.status(200).json({ isLiked: true });
+      res.status(200).json({content: { isLiked: true }});
     } else {
-      res.status(200).json({ isLiked: false });
+      res.status(200).json({content: { isLiked: false }});
     }
   } catch (error) {
     console.error(error);
@@ -64,9 +64,7 @@ router.post("/:postId", isLoggedIn, async (req, res) => {
     }
 
     res.status(200).json({
-      message: message,
-      isLiked: isLiked,
-      likesCount: updatedLikesCount,
+      message: message, content:{isLiked: isLiked, likesCount: updatedLikesCount}
     });
   } catch (error) {
     console.error(error);

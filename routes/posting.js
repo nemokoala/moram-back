@@ -73,7 +73,7 @@ router.get("/:id", async (req, res) => {
       "UPDATE postings SET hitCount = hitCount + 1 WHERE id = ?";
     await db.query(updateHitCountSql, [req.params.id]);
 
-    res.json(results[0]);
+    res.json({content:results[0]});
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "서버 오류입니다." });
@@ -277,7 +277,7 @@ router.get("/search", async (req, res) => {
       return res.status(404).json({ message: "검색 결과가 없습니다." }); // 검색 결과가 없는 경우 에러 메시지 반환
     }
 
-    res.json(results); // 검색 결과 반환
+    res.json({content: results}); // 검색 결과 반환
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "서버 오류입니다." });
