@@ -570,6 +570,10 @@ router.get("/check", (req, res) => {
 
 router.get("/check1", (req, res) => {
   res.send("check");
+  const user = req.session?.passport?.user || null;
+  console.log("user -> ", user);
+  if (user) return res.status(200).send(returnUser(user[0]));
+  else return res.status(403).json({ message: "로그인 정보가 없습니다." });
 });
 
 router.get("/test", async (req, res) => {
