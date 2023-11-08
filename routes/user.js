@@ -15,7 +15,6 @@ const {
   isLoggedIn,
   isNotLoggedIn,
 } = require("../config/middleware");
-const { isloggedin, isnotloggedin } = require("../config/middleware");
 const { type } = require("os");
 
 const requireLogin = (req, res, next) => {
@@ -352,6 +351,32 @@ router.get("/kakao/callback", (req, res, next) => {
       );
     });
   })(req, res, next); // 미들웨어 내의 미들웨어에는 호출 별도로 진행
+});
+
+router.post("/deleteuser", isLoggedIn, async (req, res) => {
+  const { email } = req.body;
+
+  try {
+    if (req.user[0].email !== email) {
+      return res.status(400).json({
+        code: 400,
+        success: false,
+        message: "세션오류",
+      });
+    }
+    console.log(1);
+    const sql = `DELETE FROM users WHERE email = ?`;
+    const [result] = await db.query(sql, [email]);
+    console.log(result);
+    res.status(200).json({
+      code: 200,
+      success: true,
+      message: "회원탈퇴가 완료되었습니다.",
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "서버에러" });
+  }
 });
 
 module.exports = router;
