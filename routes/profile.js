@@ -14,7 +14,6 @@ const {
   isLoggedIn,
   isNotLoggedIn,
 } = require("../config/middleware");
-const { isloggedin, isnotloggedin } = require("../config/middleware");
 const { type } = require("os");
 router.use(express.urlencoded({ extended: true }));
 router.use(express.json());
@@ -32,6 +31,11 @@ const validatePassword = (password) => {
 
 router.get("/", (req, res) => {
   res.json("profile");
+});
+//내가 작성한 글 불러오는 api
+router.post("/", isLoggedIn, async (req, res) => {
+  const userID = req.user[0].id;
+  console.log(userID);
 });
 
 module.exports = router;
