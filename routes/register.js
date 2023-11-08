@@ -19,16 +19,22 @@ const { type } = require("os");
 router.use(express.urlencoded({ extended: true }));
 router.use(express.json());
 
+// email 유효성 검사 함수, 형식에 맞으면 true, 틀리면 false 리턴
 const validateEmail = (email) => {
   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   return emailRegex.test(email);
 };
-// password 유효성 검사 함수, 형식에 맞으면 true 리턴 틀리면 false 리턴
+// password 유효성 검사 함수, 형식에 맞으면 true, 틀리면 false 리턴
 const validatePassword = (password) => {
   const passwordRegex =
     /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
   return passwordRegex.test(password);
 };
+// nickname 유호성 검사 함수, 형식에 맞으면 true, 틀리면 false 리턴
+function validateNickname(nickname) {
+  const nicknameregex = /^[a-zA-Z0-9가-힣]{2,16}$/;
+  return nicknameregex.test(nickname);
+}
 // router.get("/", (req, res) => {
 //   res.render("register");
 // });
@@ -40,18 +46,7 @@ router.post("/", async (req, res) => {
   console.log("잘받아졌나?");
   console.log(nickname);
 
-  try {
-    const sql = "SELECT * FROM users WHERE nickname = ?";
-    const [user] = await db.query(sql, [nickname]);
-    if (user.length > 0) {
-      return res.status(400).json({ message: "닉네임이 이미 존재합니다." });
-    }
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ message: "서버에러" });
-  }
-
-  console.log("회원가입중1------");
+  console.log("회원가입절차시작");
   console.log(email, password);
   console.log("--------------------");
   if (!req.session.email) {
@@ -61,15 +56,16 @@ router.post("/", async (req, res) => {
       message: "이메일 인증을 해주세요.",
     });
   }
-  // if (!req.session.nickname) {
-  //   console(req.session.nickname);
-  //   return res.status(400).json({
-  //     code: 400,
-  //     success: false,
-  //     message: "닉네임 인증을 해주세요.",
-  //   });
-  // }
-  console.log("회원가입중2");
+  console.log("1. 이메일 인증완료");
+
+  if (!validateNickname(nickname)) {
+    return res.status(400).json({
+      code: 400,
+      success: false,
+      message: "유효한 형식의 닉네임이 아닙니다.",
+    });
+  }
+
   if (!validateEmail(email)) {
     return res.status(400).json({
       code: 400,
@@ -84,6 +80,7 @@ router.post("/", async (req, res) => {
       message: "비밀번호는 8자 이상, 영문자, 숫자, 특수문자를 포함해야 합니다.",
     });
   }
+  console.log("2. 유효성 검사 완료");
   if (email !== req.session.email) {
     console.log(`인증정보 불일치`);
     console.log(email, req.session.email, nickname, req.session.nickname);
@@ -96,12 +93,6 @@ router.post("/", async (req, res) => {
   }
   console.log("회원가입중");
   try {
-    const usersql = "SELECT * FROM users WHERE email = ?";
-    const [users] = await db.query(usersql, [email]);
-    if (users.length > 0) {
-      return res.status(400).json("이메일이 이미 존재합니다.");
-    }
-
     const sql = `INSERT INTO users (platformType, nickname, email, password) VALUES (?, ?, ?, ?)`;
     hash = await bcrypt.hash(password, 12);
     await db.query(sql, ["local", nickname, email, hash]);
@@ -136,7 +127,7 @@ router.post("/validatenickname", async (req, res, next) => {
   }
 });
 
-router.post("/mailjson", async (req, res, next) => {
+router.post("/mailsend", async (req, res, next) => {
   console.log("메일 전송");
   console.log(req.body);
   console.log(1);

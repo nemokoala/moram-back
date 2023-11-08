@@ -31,7 +31,7 @@ const validatePassword = (password) => {
 };
 
 router.get("/", (req, res) => {
-  res.send("profile");
+  res.json("profile");
 });
 
 module.exports = router;
