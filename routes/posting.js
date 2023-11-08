@@ -14,8 +14,7 @@ router.get("/test", (req, res) => {
 router.get("/", async (req, res) => {
   try {
     let { category, tag, lastId, search } = req.query;
-    let titleSql =
-      "SELECT id, userId, title, nickname, writeTime, hitCount, likesCount, tag, category FROM postings";
+    let titleSql = "SELECT * FROM postings";
     let endIdSql = "SELECT id FROM postings";
     let queryParams = [];
     let conditions = [];
