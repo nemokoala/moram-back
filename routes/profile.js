@@ -35,13 +35,15 @@ router.get("/", (req, res) => {
 //내가 작성한 글 불러오는 api
 router.post("/", isLoggedIn, async (req, res) => {
   const userID = req.user[0].id;
-
   try {
-    const sql = "SELECT * FROM postings WHERE userId = ?";
-    const [postings] = await db.query(sql, [userID]);
-    res.status(200).json({ content: postings });
+    const postingSql = "SELECT * FROM postings WHERE userId = ?";
+    const [postings] = await db.query(postingSql, [userID]);
+    const commentSql = "SELECT * FROM comments WHERE userId = ?";
+    const [comments] = await db.query(commentSql, [userID]);
+    res.status(200).json({ posting: postings, comment: comments });
   } catch (err) {
     console.log(err);
+
     res.status(500).json({ message: "서버 에러" });
   }
 });
