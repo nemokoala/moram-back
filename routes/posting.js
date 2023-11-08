@@ -286,7 +286,7 @@ router.get("/search", async (req, res) => {
   }
 });
 
-router.post("/imgurl", isLoggedIn, getUploadUrls, async (req, res) => {
+router.get("/imgurl", isLoggedIn, getUploadUrls, async (req, res) => {
   try {
     uploadData = req.uploadData;
     if (uploadData) {
