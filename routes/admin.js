@@ -33,6 +33,30 @@ router.get("/allposts", isLoggedIn, isAdmin, async (req, res) => {
   }
 });
 
+//게시글 삭제하기
+router.delete("/:id", isLoggedIn, isAdmin, async (req, res) => {
+  const postId = Number(req.params.id);
+  try {
+    //해당 게시글이 존재하는지
+    const postSql = "SELECT * FROM postings WHERE id = ?";
+    const [posts] = await db.query(postSql, postId);
+    if (posts.length === 0) {
+      res
+        .status(404)
+        .json({ message: " 해당하는 게시글이 존재하지 않습니다. " });
+      return;
+    }
+
+    //게시글 삭제하기
+    const deleteSql = "DELETE FROM postings WHERE id = ? ";
+    const [results] = await db.query(deleteSql, postId);
+    res.status(200).json({ message: "해당 게시글이 삭제되었습니다." });
+  } catch (error) {
+    res.status(500).json({ message: "서버 오류입니다. " });
+    console.error(error);
+  }
+});
+
 //특정 게시글 조회
 router.get("/allposts/:id", isLoggedIn, isAdmin, async (req, res) => {
   const postId = Number(req.params.id);
@@ -48,6 +72,37 @@ router.get("/allposts/:id", isLoggedIn, isAdmin, async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "서버 오류입니다. " });
+  }
+});
+
+//신고 기능
+//신고 목록 조회하기
+router.get("/report", isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const reportSql = "SELECT id, nickname, reason FROM reports ";
+    const [results] = await db.query(reportSql);
+    res.status(200).json({ content: results });
+  } catch (error) {
+    res.status(500).json({ message: "서버 에러 " });
+    console.error(error);
+  }
+});
+//특정 신고 목록 조회하기
+router.get("/report/:id", isLoggedIn, isAdmin, async (req, res) => {
+  const reportId = req.params.id;
+  try {
+    const reportSql = "SELECT * FROM reports WHERE id = ?";
+    const [results] = await db.query(reportSql, reportId);
+
+    if (results.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "해당하는 게시물을 신고글을 찾을 수 없습니다. " });
+    }
+    res.status(200).json({ content: results });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "서버에러 " });
   }
 });
 
