@@ -162,7 +162,7 @@ router.post("/mailsend", async (req, res, next) => {
       text: `오른쪽 숫자 6자리를 입력해주세요 : ${authcode}`,
     };
     console.log(mailOptions);
-    await transporter.jsonMail(mailOptions);
+    await transporter.sendMail(mailOptions);
     console.log("메일 발송 성공");
 
     //db에 인증 정보 저장 (이메일, 인증코드, 만료시간)
