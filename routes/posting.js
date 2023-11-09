@@ -13,13 +13,12 @@ router.get("/test", (req, res) => {
 
 router.get("/", async (req, res) => {
   try {
-    let { category, tag, lastId } = req.query;
-    let titleSql =
-      "SELECT id, userId, title, nickname, writeTime, hitCount, likesCount, tag, category FROM postings";
+    let { category, tag, lastId, search } = req.query;
+    let titleSql = "SELECT * FROM postings";
     let endIdSql = "SELECT id FROM postings";
     let queryParams = [];
     let conditions = [];
-    if (category || tag || lastId) {
+    if (category || tag || lastId || search) {
       if (category) {
         conditions.push("category = ?");
         queryParams.push(category);
@@ -28,6 +27,12 @@ router.get("/", async (req, res) => {
       if (tag) {
         conditions.push("tag = ?");
         queryParams.push(tag);
+      }
+
+      if (search) {
+        conditions.push("(title LIKE ? or content LIKE ?)");
+        queryParams.push(`%${search}%`);
+        queryParams.push(`%${search}%`);
       }
 
       if (lastId) {
@@ -47,7 +52,7 @@ router.get("/", async (req, res) => {
     endIdSql += " ORDER BY id ASC LIMIT 1";
     console.log("db sql", titleSql);
     const [results] = await db.query(titleSql, queryParams);
-    console.log(results);
+    //console.log(results);
     const [endId] = await db.query(endIdSql, queryParams);
     return res.json({
       content: {
@@ -307,7 +312,7 @@ router.get("/search", async (req, res) => {
   }
 });
 
-router.post("/imgurl", isLoggedIn, getUploadUrls, async (req, res) => {
+router.get("/imgurl", isLoggedIn, getUploadUrls, async (req, res) => {
   try {
     uploadData = req.uploadData;
     if (uploadData) {
