@@ -90,6 +90,7 @@ router.post("/", isLoggedIn, async (req, res) => {
   console.log("밸류: ", Object.values(categoryList));
   console.log("Category:", category);
   console.log("Tag:", tag);
+  
   // 카테고리와 태그 값이 유효한지 확인
   if (!category || tag === "")
     return res.status(400).json({ message: "학과, 태그를 모두 선택해주세요." });
@@ -105,6 +106,27 @@ router.post("/", isLoggedIn, async (req, res) => {
   if (!uniqueTag.includes(tag)) {
     return res.status(400).json({ message: "유효하지 않은 태그입니다." });
   }
+
+  // 제목과 내용의 최소/최대 길이 검사
+  const minTitleLength = 4;
+  const maxTitleLength = 30;
+  const minContentLength = 10;
+  const maxContentLength = 2000;
+
+  if (title.length < minTitleLength || title.length > maxTitleLength) {
+    return res.status(400).json({ message: `제목은 ${minTitleLength}자 이상 ${maxTitleLength}자 이하로 입력해주세요.` });
+  }
+  
+  if (content.length < minContentLength || content.length > maxContentLength) {
+    return res.status(400).json({ message: `내용은 ${minContentLength}자 이상 ${maxContentLength}자 이하로 입력해주세요.` });
+  }
+
+  // 제목의 특수문자 검사 (알파벳, 숫자, 공백, !, ?, %, ~만 허용)
+const titleRegex = /^[a-zA-Z0-9 !?%~]*$/;
+if (!titleRegex.test(title)) {
+  return res.status(400).json({ message: "제목에는 알파벳, 숫자, 공백, !, ?, %, ~외의 특수문자를 사용할 수 없습니다." });
+}
+
   // 여기서 세션으로부터 userId와 nickname을 가져옵니다.
   console.log("포스트", req.session.passport);
   const { nickname } = req.session.passport.user[0];
@@ -261,13 +283,12 @@ router.get("/search", async (req, res) => {
     // 검색 결과를 페이지 당 10개씩 제한, 페이지 번호에 따라 결과를 건너뛰는 LIMIT과 OFFSET을 사용
     const searchSql =
       "SELECT id, userId, title, nickname, writeTime, hitCount, likesCount, tag, category FROM postings \
-      WHERE title LIKE ? OR content LIKE ? OR tag LIKE ? LIMIT 10 OFFSET ?";
+      WHERE title LIKE ? OR content LIKE ? LIMIT 10 OFFSET ?";
 
     // SQL의 LIKE 연산자를 사용하여 검색어가 포함된 게시물 찾기
     // 검색어 앞뒤에 '%'를 붙여 검색어가 어디에든 포함된 경우를 찾을 수 있음
     // LIMIT과 OFFSET에 사용할 값을 계산하여 쿼리 파라미터에 추가
     const queryParams = [
-      `%${keyword}%`,
       `%${keyword}%`,
       `%${keyword}%`,
       (page - 1) * 10,
