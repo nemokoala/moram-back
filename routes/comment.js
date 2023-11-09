@@ -13,8 +13,8 @@ router.use(bodyParser.urlencoded({ extended: false }));
 //   res.json(req.query.t);
 // });
 
+//해당 게시물의 모든 댓글 내용 불러오기
 router.get("/:postId", async (req, res) => {
-  //해당 게시물의 모든 댓글 내용 불러오기
   const postId = req.params.postId;
   try {
     const allSql = "SELECT * FROM comments WHERE postId = ?";
@@ -26,6 +26,7 @@ router.get("/:postId", async (req, res) => {
   }
 });
 
+// 댓글 추가하기
 router.post("/:postId", isLoggedIn, async (req, res) => {
   try {
     const writeTime = new Date();
@@ -35,6 +36,16 @@ router.post("/:postId", isLoggedIn, async (req, res) => {
     const userId = Number(req.session.passport.user[0].id);
     const userNickname = req.session.passport.user[0].nickname;
 
+    // 댓글 수 가져오기
+    const commmentCountSql = "SELECT commentCount FROM postings WHERE id =? ";
+    const [[commentCount]] = await db.query(commmentCountSql, postId);
+    const count = commentCount.commentCount + 1;
+
+    // 댓글 수 삽입
+    const addCountSql = "UPDATE postings SET commentCount = ? WHERE id = ?";
+    await db.query(addCountSql, [count, postId]);
+
+    //댓글 추가
     const addSql =
       "INSERT INTO comments ( userId, postId, nickname, content, writeTime, parentId) VALUES (?, ?, ?, ?, ?, ?)";
     await db.query(addSql, [
@@ -70,8 +81,8 @@ router.delete("/:id", isLoggedIn, async (req, res) => {
   try {
     const commentSql = "SELECT * FROM comments WHERE id = ?";
     const [comments] = await db.query(commentSql, id);
-    //삭제하려는 댓글 레코드
 
+    //삭제하려는 댓글 레코드
     if (comments.length === 0) {
       res
         .status(404)
@@ -79,10 +90,21 @@ router.delete("/:id", isLoggedIn, async (req, res) => {
       return;
     }
 
+    const postId = comments[0].postId;
     const commentUserId = comments[0].userId;
 
     // 댓글 작성자 id vs 삭제요청 유저 id 비교 후 권한 부여
     if (userId === commentUserId) {
+      // 댓글 수 가져오기
+      const commmentCountSql = "SELECT commentCount FROM postings WHERE id =? ";
+      const [[commentCount]] = await db.query(commmentCountSql, postId);
+      const count = commentCount.commentCount - 1;
+
+      // 댓글 수 삽입
+      const addCountSql = "UPDATE postings SET commentCount = ? WHERE id = ?";
+      await db.query(addCountSql, [count, postId]);
+
+      //댓글 삭제
       const deleteSql = "DELETE FROM comments WHERE id = ?";
       const [results] = await db.query(deleteSql, id);
       res.status(200).json({ message: "댓글이 삭제되었습니다." });
