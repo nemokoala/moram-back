@@ -50,7 +50,7 @@ router.post("/", async (req, res, next) => {
       // done()의 3번째 인자 { message: '비밀번호가 일치하지 않습니다.' }가 실행
       console.log("hi.");
       console.log(info);
-      return res.status(401).send(info);
+      return res.status(401).json(info);
     }
 
     //? done(null, exUser)가 처리된경우, 즉 로그인이 성공(user가 false가 아닌 경우), passport/index.js로 가서 실행시킨다.
@@ -79,14 +79,14 @@ router.post("/", async (req, res, next) => {
   })(req, res, next); //! 미들웨어 내의 미들웨어에는 콜백을 실행시키기위해 (req, res, next)를 붙인다.
 });
 
-router.get("/forgotpw", (req, res) => {
-  res.send("forgot");
-});
+// router.get("/forgotpw", (req, res) => {
+//   res.json("forgot");
+// });
 
 router.post("/forgotpw", async (req, res) => {
   const { email } = req.body;
   if (email === "") {
-    res.status(400).send("이메일을 입력해주세요.");
+    res.status(400).json({ message: "이메일을 입력해주세요." });
   }
 
   try {
@@ -94,7 +94,7 @@ router.post("/forgotpw", async (req, res) => {
     const result = await db.query(sql, email);
     const user = result[0];
     if (user.length === 0) {
-      return res.status(400).send("존재하지 않는 이메일입니다.");
+      return res.status(400).json({ message: "존재하지 않는 이메일입니다." });
     }
     const newpassword = await generatePassword();
     const hashedPassword = await bcrypt.hash(newpassword, 12);
@@ -143,10 +143,10 @@ router.post("/forgotpw", async (req, res) => {
     console.log("메일 발송 성공");
 
     console.log(data);
-    res.send("메일발송성공");
+    res.status(200).json({ message: "메일발송성공" });
   } catch (err) {
     console.log(err);
-    res.status(500).send("서버에러");
+    res.status(500).json({ message: "서버에러" });
   }
 });
 
@@ -176,10 +176,10 @@ router.get("/reset/:token", async (req, res) => {
     console.log(updateResult);
     const deleteSql = `DELETE FROM pwdVerification WHERE token = ?`;
     await db.query(deleteSql, [token]);
-    res.status(200).send("비밀번호 변경 성공");
+    res.status(200).json({ message: "비밀번호 변경 성공" });
   } catch (err) {
     console.log(err);
-    res.status(500).send("서버에러");
+    res.status(500).json({ message: "서버에러" });
   }
 });
 

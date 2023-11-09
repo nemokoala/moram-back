@@ -343,7 +343,7 @@ router.get("/kakao/callback", (req, res, next) => {
         next(error);
       }
       res.redirect(
-        "http://www.moram2.com/login-success?user=" +
+        "https://www.moram2.com/login-success?user=" +
           JSON.stringify({
             email: req.user[0].email,
             nickname: req.user[0].nickname,
@@ -379,4 +379,44 @@ router.post("/deleteuser", isLoggedIn, async (req, res) => {
   }
 });
 
+router.post("/ask", async (req, res) => {
+  const { email, category, title, content } = req.body;
+
+  try {
+    let transporter = smtpTransport;
+    let mailOptions = {
+      from: "c1004sos@1gmail.com", //송신할 이메일
+      to: data.mail, //수신할 이메일
+      subject: "[모람모람]아이디/비밀번호 정보입니다.",
+      html: ` <div>
+      <p>요청한 계정 정보는 아래와 같습니다.</p>
+      <hr />
+      <ul>
+        <li>사이트 : https://www.moram.com</li>
+        <li>이메일 : ${user[0].email}</li>
+        <li>닉네임 : ${user[0].nickname}</li>
+        <li>비밀번호 :${newpassword}</li>
+      </ul>
+      <span>아래 링크를 클릭하면 위에 적힌 비밀번호로 변경됩니다.</span>
+      <p>로그인 후 다른 비밀번호로 변경해 주시기 바랍니다.</p>
+      <p>링크를 클릭하지 않으면 비밀번호가 변경되지 않습니다.</p>
+      <a
+        href="http://localhost:8000/login/reset/${token}"
+        rel="noreferrer noopener"
+        target="_blank"
+        >http://localhost:8000/login/reset/${token}</a
+      >
+    </div>`,
+    };
+    console.log(mailOptions);
+    await transporter.sendMail(mailOptions);
+    console.log("메일 발송 성공");
+
+    console.log(data);
+    res.status(200).json({ message: "메일발송성공" });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "서버에러" });
+  }
+});
 module.exports = router;

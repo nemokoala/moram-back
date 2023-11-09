@@ -180,9 +180,11 @@ router.post("/mailsend", async (req, res, next) => {
 router.post("/mailverify", async (req, res, next) => {
   try {
     const { email, authcode } = req.body;
+    console.log(email);
     console.log(authcode);
     const sql = `SELECT * FROM emailVerification WHERE email = ? AND authcode = ? AND expiresAt > NOW()`;
     const [result] = await db.query(sql, [email, authcode]);
+    console.log(result);
     if (result.length === 0) {
       return res.status(400).json({ message: "인증코드가 일치하지 않습니다." });
     }
@@ -196,7 +198,9 @@ router.post("/mailverify", async (req, res, next) => {
 });
 
 router.get("/test", (req, res) => {
-  res.json("test");
+  //현재시간
+  const now = new Date();
+  console.log(now);
 });
 
 module.exports = router;
