@@ -55,9 +55,11 @@ router.get("/", async (req, res) => {
     //console.log(results);
     const [endId] = await db.query(endIdSql, queryParams);
     return res.json({
-      content: results,
-      endId: endId[0]?.id,
-      lastId: results[results.length - 1]?.id || 99999,
+      content: {
+        postings: results,
+        endId: endId[0]?.id,
+        lastId: results[results.length - 1]?.id || 99999,
+      },
     });
   } catch (error) {
     res.status(500).json({ message: "서버 오류입니다." });
@@ -117,19 +119,15 @@ router.post("/", isLoggedIn, async (req, res) => {
   const maxContentLength = 2000;
 
   if (title.length < minTitleLength || title.length > maxTitleLength) {
-    return res
-      .status(400)
-      .json({
-        message: `제목은 ${minTitleLength}자 이상 ${maxTitleLength}자 이하로 입력해주세요.`,
-      });
+    return res.status(400).json({
+      message: `제목은 ${minTitleLength}자 이상 ${maxTitleLength}자 이하로 입력해주세요.`,
+    });
   }
 
   if (content.length < minContentLength || content.length > maxContentLength) {
-    return res
-      .status(400)
-      .json({
-        message: `내용은 ${minContentLength}자 이상 ${maxContentLength}자 이하로 입력해주세요.`,
-      });
+    return res.status(400).json({
+      message: `내용은 ${minContentLength}자 이상 ${maxContentLength}자 이하로 입력해주세요.`,
+    });
   }
 
   // 여기서 세션으로부터 userId와 nickname을 가져옵니다.
