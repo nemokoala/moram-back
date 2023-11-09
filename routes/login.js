@@ -14,12 +14,11 @@ const {
   isLoggedIn,
   isNotLoggedIn,
 } = require("../config/middleware");
-const { isloggedin, isnotloggedin } = require("../config/middleware");
+
 const { type } = require("os");
 const { returnUser } = require("../config/middleware");
 router.use(express.urlencoded({ extended: true }));
 router.use(express.json());
-
 const validateEmail = (email) => {
   const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
   return emailRegex.test(email);
