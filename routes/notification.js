@@ -26,9 +26,9 @@ router.get("/:userId", isLoggedIn, async (req, res) => {
     }
   });
 
-  router.post("read/:notifyId", isLoggedIn, async (req, res) => {
+  router.post("read/:id", isLoggedIn, async (req, res) => {
     try {
-      const notifyId = Number(req.params.notifyId);
+      const notifyId = Number(req.params.id);
   
       const updateSql = "UPDATE notifications SET read = 1 WHERE id = ?";
       await db.query(updateSql, [notifyId]);
