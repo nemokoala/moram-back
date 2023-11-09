@@ -29,11 +29,8 @@ const validatePassword = (password) => {
   return passwordRegex.test(password);
 };
 
-router.get("/", (req, res) => {
-  res.json("profile");
-});
 //내가 작성한 글 불러오는 api
-router.post("/", isLoggedIn, async (req, res) => {
+router.get("/", isLoggedIn, async (req, res) => {
   const userID = req.user[0].id;
   try {
     const postingSql = "SELECT * FROM postings WHERE userId = ?";
