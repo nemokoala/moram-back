@@ -25,10 +25,7 @@ const { authenticateUser, isAdmin } = require("../config/middleware");
 const { NONAME } = require("dns");
 app.use(
   cors({
-    origin: [
-      "http://localhost:3000",
-      "https://moram-front-git-main-sanghee01.vercel.app",
-    ],
+    origin: ["http://localhost:3000", "https://www.moram2.com"],
     credentials: true,
   })
 );
@@ -57,7 +54,7 @@ app.use("/profile", profileRoutes);
 app.use("/notice", noticeRoutes);
 app.use("/bookmark", bookmarkRoutes);
 app.use("/gpt", gptRoutes);
-app.use("/notification",notifyRoutes);
+app.use("/notification", notifyRoutes);
 
 app.get("/", (req, res) => {
   res.status(200).send(`Server is on`);
