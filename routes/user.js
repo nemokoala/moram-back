@@ -17,8 +17,6 @@ const {
 } = require("../config/middleware");
 const { isloggedin, isnotloggedin } = require("../config/middleware");
 const { type } = require("os");
-router.use(express.urlencoded({ extended: true }));
-router.use(express.json());
 
 const requireLogin = (req, res, next) => {
   if (req.session.user) {
@@ -565,7 +563,7 @@ router.get("/upload", async (req, res) => {
 router.get("/check", (req, res) => {
   const user = req.session?.passport?.user || null;
   console.log("user -> ", user);
-  if (user) return res.status(200).send(returnUser(user[0]));
+  if (user) return res.status(200).json({ content: returnUser(user[0]) });
   else return res.status(403).json({ message: "로그인 정보가 없습니다." });
 });
 

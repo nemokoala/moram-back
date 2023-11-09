@@ -36,8 +36,8 @@ router.post("/:postId", isLoggedIn, async (req, res) => {
     const userNickname = req.session.passport.user[0].nickname;
 
     const addSql =
-      "INSERT INTO comments ( userId, postId, nickname, content, writeTime, parentId) VALUES (?, ?, ?, ?, ?, ?)";
-    await db.query(addSql, [
+      "INSERT INTO comments (userId, postId, nickname, content, writeTime, parentId) VALUES (?, ?, ?, ?, ?, ?)";
+    const result = await db.query(addSql, [
       userId,
       postId,
       userNickname,
@@ -45,6 +45,50 @@ router.post("/:postId", isLoggedIn, async (req, res) => {
       writeTime,
       parentId,
     ]);
+
+    // 댓글 작성이 성공적으로 이루어진 후 알림 전송
+    if (result) {
+      // 게시물 작성자에게 알림 전송
+      const postSql = "SELECT userId FROM postings WHERE id = ?";
+      const [postResults] = await db.query(postSql, [postId]);
+
+      if (postResults.length === 0) {
+        return res.status(404).json({ message: "게시물을 찾을 수 없습니다." });
+      }
+
+      const postUserId = postResults[0].userId;
+
+      const commentNotification = {
+        notifyType: 0, // 대상 타입은 0으로 설정 (게시물)
+        targetId: postId, // 게시물 ID
+        targetuserId: postUserId, // 게시물 작성자의 ID
+        notifyTime: new Date(), // 알림 생성 시간
+        read: 0 // 알림 읽음 여부 (0: 읽지 않음, 1: 읽음)
+      };
+
+      const insertNotificationSql = "INSERT INTO notifications SET ?";
+      await db.query(insertNotificationSql, commentNotification);
+
+      // 대댓글 작성시 부모 댓글 작성자에게 알림 전송
+      if (parentId) {
+        const parentCommentSql = "SELECT userId FROM comments WHERE id = ?";
+        const [parentCommentResults] = await db.query(parentCommentSql, [parentId]);
+
+        if (parentCommentResults.length > 0) {
+          const parentCommentUserId = parentCommentResults[0].userId;
+
+          const replyNotification = {
+            notifyType: 1, // 대상 타입은 1으로 설정 (댓글)
+            targetId: parentId, // 부모 댓글 ID
+            targetuserId: parentCommentUserId, // 부모 댓글 작성자의 ID
+            notifyTime: new Date(), // 알림 생성 시간
+            read: 0 // 알림 읽음 여부 (0: 읽지 않음, 1: 읽음)
+          };
+
+          await db.query(insertNotificationSql, replyNotification);
+        }
+      }
+    }
 
     res.status(200).json({
       message: "댓글이 성공적으로 작성되었습니다.",
@@ -59,6 +103,7 @@ router.post("/:postId", isLoggedIn, async (req, res) => {
     res.status(500).json({ message: "댓글 추가 서버에러" });
   }
 });
+
 // 댓글추가 : http://localhost:8000/comment/123
 //대댓글 추가 : http://localhost:8000/comment/123?parentId=456
 

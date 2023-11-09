@@ -20,10 +20,15 @@ const likeRoutes = require("./like");
 const profileRoutes = require("./profile");
 const bookmarkRoutes = require("./bookmark");
 const gptRoutes = require("./gpt");
+const notifyRoutes = require("./notification");
 const { authenticateUser, isAdmin } = require("../config/middleware");
+const { NONAME } = require("dns");
 app.use(
   cors({
-    origin: true,
+    origin: [
+      "http://localhost:3000",
+      "https://moram-front-git-main-sanghee01.vercel.app",
+    ],
     credentials: true,
   })
 );
@@ -52,6 +57,7 @@ app.use("/profile", profileRoutes);
 app.use("/notice", noticeRoutes);
 app.use("/bookmark", bookmarkRoutes);
 app.use("/gpt", gptRoutes);
+app.use("/notification",notifyRoutes);
 
 app.get("/", (req, res) => {
   res.status(200).send(`Server is on`);
