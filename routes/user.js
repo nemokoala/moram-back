@@ -343,7 +343,7 @@ router.get("/kakao/callback", (req, res, next) => {
         next(error);
       }
       res.redirect(
-        "http://localhost:3000/login-success?user=" +
+        "http://www.moram2.com/login-success?user=" +
           JSON.stringify({
             email: req.user[0].email,
             nickname: req.user[0].nickname,
