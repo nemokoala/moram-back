@@ -6,10 +6,10 @@ const { isLoggedIn } = require("../config/middleware");
 const { categoryList, tagList } = require("../config/categorytagList");
 const { getUploadUrls } = require("../config/aws");
 
-router.get("/test", (req, res) => {
+/*router.get("/test", (req, res) => {
   res.send("test");
   console.log(req.session.passport);
-});
+});*/
 
 router.get("/", async (req, res) => {
   try {
