@@ -50,11 +50,9 @@ router.get("/", async (req, res) => {
     console.log(results);
     const [endId] = await db.query(endIdSql, queryParams);
     return res.json({
-      content: {
-        postings: results,
-        endId: endId[0]?.id,
-        lastId: results[results.length - 1]?.id || 99999,
-      },
+      content: results,
+      endId: endId[0]?.id,
+      lastId: results[results.length - 1]?.id || 99999,
     });
   } catch (error) {
     res.status(500).json({ message: "서버 오류입니다." });
@@ -75,7 +73,7 @@ router.get("/:id", async (req, res) => {
       "UPDATE postings SET hitCount = hitCount + 1 WHERE id = ?";
     await db.query(updateHitCountSql, [req.params.id]);
 
-    res.json({ content: results[0] });
+    res.json({content:results[0]});
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "서버 오류입니다." });
@@ -90,6 +88,7 @@ router.post("/", isLoggedIn, async (req, res) => {
   console.log("밸류: ", Object.values(categoryList));
   console.log("Category:", category);
   console.log("Tag:", tag);
+  
   // 카테고리와 태그 값이 유효한지 확인
   if (!category || tag === "")
     return res.status(400).json({ message: "학과, 태그를 모두 선택해주세요." });
@@ -105,6 +104,21 @@ router.post("/", isLoggedIn, async (req, res) => {
   if (!uniqueTag.includes(tag)) {
     return res.status(400).json({ message: "유효하지 않은 태그입니다." });
   }
+
+  // 제목과 내용의 최소/최대 길이 검사
+  const minTitleLength = 4;
+  const maxTitleLength = 30;
+  const minContentLength = 10;
+  const maxContentLength = 2000;
+
+  if (title.length < minTitleLength || title.length > maxTitleLength) {
+    return res.status(400).json({ message: `제목은 ${minTitleLength}자 이상 ${maxTitleLength}자 이하로 입력해주세요.` });
+  }
+  
+  if (content.length < minContentLength || content.length > maxContentLength) {
+    return res.status(400).json({ message: `내용은 ${minContentLength}자 이상 ${maxContentLength}자 이하로 입력해주세요.` });
+  }
+
   // 여기서 세션으로부터 userId와 nickname을 가져옵니다.
   console.log("포스트", req.session.passport);
   const { nickname } = req.session.passport.user[0];
@@ -139,21 +153,27 @@ router.post("/", isLoggedIn, async (req, res) => {
 router.put("/:id", isLoggedIn, async (req, res) => {
   const { title, content, img1Url, img2Url, img3Url, category, tag } = req.body;
 
-  // 카테고리와 태그 값이 유효한지 확인
-  if (!category || tag === "")
-    return res.status(400).json({ message: "학과, 태그를 모두 선택해주세요." });
-  const uniqueCategory = Object.values(categoryList).find((categoryValue) => {
-    return categoryValue.includes(category);
-  });
-  if (!uniqueCategory.includes(category)) {
-    return res.status(400).json({ message: "유효하지 않은 카테고리입니다." });
-  }
-  const uniqueTag = tagList.find((tagValue) => {
-    return tagValue.includes(tag);
-  });
-  if (!uniqueTag.includes(tag)) {
-    return res.status(400).json({ message: "유효하지 않은 태그입니다." });
-  }
+// 카테고리와 태그 값이 유효한지 확인
+if (!category || tag === "") {
+  return res.status(400).json({ message: "학과, 태그를 모두 선택해주세요." });
+}
+
+const uniqueCategory = Object.values(categoryList).find((categoryValue) => {
+  return categoryValue.includes(category);
+});
+
+if (!uniqueCategory || !uniqueCategory.includes(category)) {
+  return res.status(400).json({ message: "유효하지 않은 카테고리입니다." });
+}
+
+const uniqueTag = tagList.find((tagValue) => {
+  return tagValue.includes(tag);
+});
+
+if (!uniqueTag || !uniqueTag.includes(tag)) {
+  return res.status(400).json({ message: "유효하지 않은 태그입니다." });
+}
+
   // 로그인한 사용자의 ID를 가져옵니다.
   const loginUserId = req.session.passport.user[0].id;
 
@@ -261,13 +281,12 @@ router.get("/search", async (req, res) => {
     // 검색 결과를 페이지 당 10개씩 제한, 페이지 번호에 따라 결과를 건너뛰는 LIMIT과 OFFSET을 사용
     const searchSql =
       "SELECT id, userId, title, nickname, writeTime, hitCount, likesCount, tag, category FROM postings \
-      WHERE title LIKE ? OR content LIKE ? OR tag LIKE ? LIMIT 10 OFFSET ?";
+      WHERE title LIKE ? OR content LIKE ? LIMIT 10 OFFSET ?";
 
     // SQL의 LIKE 연산자를 사용하여 검색어가 포함된 게시물 찾기
     // 검색어 앞뒤에 '%'를 붙여 검색어가 어디에든 포함된 경우를 찾을 수 있음
     // LIMIT과 OFFSET에 사용할 값을 계산하여 쿼리 파라미터에 추가
     const queryParams = [
-      `%${keyword}%`,
       `%${keyword}%`,
       `%${keyword}%`,
       (page - 1) * 10,
@@ -279,7 +298,7 @@ router.get("/search", async (req, res) => {
       return res.status(404).json({ message: "검색 결과가 없습니다." }); // 검색 결과가 없는 경우 에러 메시지 반환
     }
 
-    res.json({ content: results }); // 검색 결과 반환
+    res.json({content: results}); // 검색 결과 반환
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "서버 오류입니다." });

@@ -41,6 +41,20 @@ router.post("/:postId", isLoggedIn, async (req, res) => {
     const userId = req.session.passport.user[0].id;
     const { postId } = req.params;
 
+    // 게시글 작성자 확인
+    const postSql = "SELECT userId FROM postings WHERE id = ?";
+    const [postRows] = await db.query(postSql, [postId]);
+
+    // 게시글이 존재하지 않는 경우
+    if (postRows.length === 0) {
+      return res.status(404).json({ message: "게시글을 찾을 수 없습니다." });
+    }
+
+    // 게시글 작성자와 현재 사용자가 같은 경우
+    if (postRows[0].userId === userId) {
+      return res.status(400).json({ message: "자신의 게시글에는 좋아요를 누를 수 없습니다." });
+    }
+
     const checkSql = "SELECT * FROM likes WHERE userId = ? AND postId = ?";
     const [rows] = await db.query(checkSql, [userId, postId]);
     let message, isLiked, updatedLikesCount;
