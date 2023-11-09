@@ -30,8 +30,8 @@ router.post("/:postId", isLoggedIn, async (req, res) => {
   try {
     const writeTime = new Date();
     const content = req.body.content;
-    const postId = Number(req.params.postId); 
-    const parentId = Number(req.query.parentId) || null; 
+    const postId = Number(req.params.postId); //해당 댓글의 포스팅 id
+    const parentId = Number(req.query.parentId) || null; //대댓글 시 부모 댓글 id
     const userId = Number(req.session.passport.user[0].id);
     const userNickname = req.session.passport.user[0].nickname;
 
