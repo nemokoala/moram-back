@@ -52,7 +52,7 @@ router.get("/allposts/:id", isLoggedIn, isAdmin, async (req, res) => {
 });
 
 //게시글 삭제하기
-router.delete("/allposts/:id", isLoggedIn, isAdmin, async (req, res) => {
+router.delete("/posting/:id", isLoggedIn, isAdmin, async (req, res) => {
   const postId = Number(req.params.id);
   try {
     //해당 게시글이 존재하는지

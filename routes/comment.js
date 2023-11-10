@@ -36,14 +36,10 @@ router.post("/:postId", isLoggedIn, async (req, res) => {
     const userId = Number(req.session.passport.user[0].id);
     const userNickname = req.session.passport.user[0].nickname;
 
-    // 댓글 수 가져오기
-    const commmentCountSql = "SELECT commentCount FROM postings WHERE id =? ";
-    const [[commentCount]] = await db.query(commmentCountSql, postId);
-    const count = commentCount.commentCount + 1;
-
     // 댓글 수 삽입
-    const addCountSql = "UPDATE postings SET commentCount = ? WHERE id = ?";
-    await db.query(addCountSql, [count, postId]);
+    const addCountSql =
+      "UPDATE postings SET commentCount = commentCount + 1 WHERE id = ?";
+    await db.query(addCountSql, postId);
 
     //댓글 추가
     const addSql =
@@ -74,7 +70,7 @@ router.post("/:postId", isLoggedIn, async (req, res) => {
         targetId: postId, // 게시물 ID
         targetuserId: postUserId, // 게시물 작성자의 ID
         notifyTime: new Date(), // 알림 생성 시간
-        read: 0 // 알림 읽음 여부 (0: 읽지 않음, 1: 읽음)
+        read: 0, // 알림 읽음 여부 (0: 읽지 않음, 1: 읽음)
       };
 
       const insertNotificationSql = "INSERT INTO notifications SET ?";
@@ -83,7 +79,9 @@ router.post("/:postId", isLoggedIn, async (req, res) => {
       // 대댓글 작성시 부모 댓글 작성자에게 알림 전송
       if (parentId) {
         const parentCommentSql = "SELECT userId FROM comments WHERE id = ?";
-        const [parentCommentResults] = await db.query(parentCommentSql, [parentId]);
+        const [parentCommentResults] = await db.query(parentCommentSql, [
+          parentId,
+        ]);
 
         if (parentCommentResults.length > 0) {
           const parentCommentUserId = parentCommentResults[0].userId;
@@ -93,7 +91,7 @@ router.post("/:postId", isLoggedIn, async (req, res) => {
             targetId: parentId, // 부모 댓글 ID
             targetuserId: parentCommentUserId, // 부모 댓글 작성자의 ID
             notifyTime: new Date(), // 알림 생성 시간
-            read: 0 // 알림 읽음 여부 (0: 읽지 않음, 1: 읽음)
+            read: 0, // 알림 읽음 여부 (0: 읽지 않음, 1: 읽음)
           };
 
           await db.query(insertNotificationSql, replyNotification);
@@ -141,13 +139,17 @@ router.delete("/:id", isLoggedIn, async (req, res) => {
     // 댓글 작성자 id vs 삭제요청 유저 id 비교 후 권한 부여
     if (userId === commentUserId) {
       // 댓글 수 가져오기
-      const commmentCountSql = "SELECT commentCount FROM postings WHERE id =? ";
-      const [[commentCount]] = await db.query(commmentCountSql, postId);
-      const count = commentCount.commentCount - 1;
+      // const commmentCountSql = "SELECT commentCount FROM postings WHERE id =? ";
+      // const [[commentCount]] = await db.query(commmentCountSql, postId);
+      // const count = commentCount.commentCount - 1;
 
       // 댓글 수 삽입
-      const addCountSql = "UPDATE postings SET commentCount = ? WHERE id = ?";
-      await db.query(addCountSql, [count, postId]);
+      // const addCountSql = "UPDATE postings SET commentCount = ? WHERE id = ?";
+      // await db.query(addCountSql, [count, postId]);
+
+      const addCountSql =
+        "UPDATE postings SET commentCount = commentCount - 1 WHERE id = ?";
+      await db.query(addCountSql, postId);
 
       //댓글 삭제
       const deleteSql = "DELETE FROM comments WHERE id = ?";
