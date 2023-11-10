@@ -281,6 +281,7 @@ router.post("/report/:postId", isLoggedIn, async (req, res) => {
 });
 
 router.get("/popular", async (req, res) => {
+  console.log("리퀘:",router);
   try {
     // 좋아요 수가 가장 많은 상위 3개 게시글을 선택하는 SQL 쿼리
     const popularSql = "SELECT * FROM postings ORDER BY likesCount DESC LIMIT 3";
