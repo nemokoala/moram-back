@@ -113,10 +113,11 @@ router.post("/", isLoggedIn, async (req, res) => {
   }
 
   // 제목과 내용의 최소/최대 길이 검사
-  const minTitleLength = 4;
+  // 클라이언트 측에서 500자 이상이면 서버요청 못하게 막을 수 있나
+  const minTitleLength = 2;
   const maxTitleLength = 30;
-  const minContentLength = 10;
-  const maxContentLength = 2000;
+  const minContentLength = 4;
+  const maxContentLength = 500;
 
   if (title.length < minTitleLength || title.length > maxTitleLength) {
     return res.status(400).json({

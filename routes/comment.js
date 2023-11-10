@@ -68,7 +68,8 @@ router.post("/:postId", isLoggedIn, async (req, res) => {
       }
 
       const postUserId = postResults[0].userId;
-
+      // 만약 게시물 작성자가 댓글을 작성한 사용자와 같지 않다면 알림을 생성
+      if (postUserId !== req.session.passport.user[0].id) {
       const commentNotification = {
         notifyType: 0, // 대상 타입은 0으로 설정 (게시물)
         targetId: postId, // 게시물 ID
@@ -79,7 +80,7 @@ router.post("/:postId", isLoggedIn, async (req, res) => {
 
       const insertNotificationSql = "INSERT INTO notifications SET ?";
       await db.query(insertNotificationSql, commentNotification);
-
+      }
       // 대댓글 작성시 부모 댓글 작성자에게 알림 전송
       if (parentId) {
         const parentCommentSql = "SELECT userId FROM comments WHERE id = ?";
@@ -88,6 +89,8 @@ router.post("/:postId", isLoggedIn, async (req, res) => {
         if (parentCommentResults.length > 0) {
           const parentCommentUserId = parentCommentResults[0].userId;
 
+          // 만약 부모 댓글의 작성자가 대댓글을 작성한 사용자와 같지 않다면 알림을 생성
+          if (parentCommentUserId !== req.session.passport.user[0].id) {
           const replyNotification = {
             notifyType: 1, // 대상 타입은 1으로 설정 (댓글)
             targetId: parentId, // 부모 댓글 ID
@@ -95,7 +98,7 @@ router.post("/:postId", isLoggedIn, async (req, res) => {
             notifyTime: new Date(), // 알림 생성 시간
             read: 0 // 알림 읽음 여부 (0: 읽지 않음, 1: 읽음)
           };
-
+        }
           await db.query(insertNotificationSql, replyNotification);
         }
       }
