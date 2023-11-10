@@ -3,6 +3,7 @@ const router = express.Router();
 const db = require("../config/db");
 const passport = require("../config/passport");
 const { isnotloggedin, isLoggedIn, isAdmin } = require("../config/middleware");
+const { unsubscribe } = require("./admin");
 
 //회원관리기능
 router.get("/allusers", isLoggedIn, isAdmin, async (req, res) => {
@@ -15,6 +16,27 @@ router.get("/allusers", isLoggedIn, isAdmin, async (req, res) => {
     res.status(200).json({ content: allUser });
   } catch (error) {
     res.status(500).json({ message: "서버 오류" });
+    console.error(error);
+  }
+});
+
+//회원 삭제 기능
+router.delete("/user/:id", isLoggedIn, isAdmin, async (req, res) => {
+  const userId = req.params.id;
+  try {
+    const userSql = "SELECT * FROM users WHERE id =? ";
+    const [users] = await db.query(userSql, userId);
+    if (users.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "해당하는 유저가 존재하지 않습니다. " });
+    }
+
+    const deleteSql = "DELETE FROM users WHERE id =?";
+    const [results] = await db.query(deleteSql, userId);
+    res.status(200).json({ message: "해당 유저가 삭제되었습니다. " });
+  } catch (error) {
+    res.status(500).json({ message: "서버에러 " });
     console.error(error);
   }
 });

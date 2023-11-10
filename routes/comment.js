@@ -138,15 +138,6 @@ router.delete("/:id", isLoggedIn, async (req, res) => {
 
     // 댓글 작성자 id vs 삭제요청 유저 id 비교 후 권한 부여
     if (userId === commentUserId) {
-      // 댓글 수 가져오기
-      // const commmentCountSql = "SELECT commentCount FROM postings WHERE id =? ";
-      // const [[commentCount]] = await db.query(commmentCountSql, postId);
-      // const count = commentCount.commentCount - 1;
-
-      // 댓글 수 삽입
-      // const addCountSql = "UPDATE postings SET commentCount = ? WHERE id = ?";
-      // await db.query(addCountSql, [count, postId]);
-
       const addCountSql =
         "UPDATE postings SET commentCount = commentCount - 1 WHERE id = ?";
       await db.query(addCountSql, postId);
