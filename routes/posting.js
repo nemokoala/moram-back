@@ -254,14 +254,14 @@ router.post("/report/:postId", isLoggedIn, async (req, res) => {
 
   try {
     const { nickname } = req.session.passport.user[0];
-    const userId = req.session.passport.user[0].id; // 로그인한 사용자의 ID
-    const { postId } = req.params; // 신고할 게시물의 ID
+    const userId = Number(req.session.passport.user[0].id); // 로그인한 사용자의 ID
+    const { postId } = Number(req.params); // 신고할 게시물의 ID
     const { reason, description } = req.body; // 신고 이유와 상세 설명
     const createTime = new Date(); // 신고 시간
 
     // 신고 정보를 데이터베이스에 저장하는 SQL 쿼리
     const reportSql =
-      "INSERT INTO reports (userId, nickname, postId, reason, description, createTime) VALUES (?, ?, ?, ?, ?, ?)";
+      "INSERT INTO reports (userId, nickname, postId, reason, createTime) VALUES (?, ?, ?, ?, ?)";
 
     // SQL 쿼리 실행
     await db.query(reportSql, [
@@ -269,7 +269,6 @@ router.post("/report/:postId", isLoggedIn, async (req, res) => {
       nickname,
       postId,
       reason,
-      description,
       createTime,
     ]);
 
@@ -279,6 +278,23 @@ router.post("/report/:postId", isLoggedIn, async (req, res) => {
     res.status(500).json({ message: "서버 오류입니다." });
   }
 });
+
+router.get("/popular", async (req, res) => {
+  try {
+    // 좋아요 수가 가장 많은 상위 3개 게시글을 선택하는 SQL 쿼리
+    const popularSql = "SELECT * FROM postings ORDER BY likesCount DESC LIMIT 3";
+    
+    // SQL 쿼리 실행
+    const [results] = await db.query(popularSql);
+
+    // 결과 반환
+    res.json({ content: results });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "서버 오류입니다." });
+  }
+});
+
 
 router.get("/search", async (req, res) => {
   try {
