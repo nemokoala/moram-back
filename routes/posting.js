@@ -279,6 +279,23 @@ router.post("/report/:postId", isLoggedIn, async (req, res) => {
   }
 });
 
+router.get("/popular", async (req, res) => {
+  try {
+    // 좋아요 수가 가장 많은 상위 3개 게시글을 선택하는 SQL 쿼리
+    const popularSql = "SELECT * FROM postings ORDER BY likesCount DESC LIMIT 3";
+    
+    // SQL 쿼리 실행
+    const [results] = await db.query(popularSql);
+
+    // 결과 반환
+    res.json({ content: results });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "서버 오류입니다." });
+  }
+});
+
+
 router.get("/search", async (req, res) => {
   try {
     const { keyword, page = 1 } = req.query; // 검색어와 페이지 번호를 받습니다. 페이지 번호가 없는 경우 기본값 1
