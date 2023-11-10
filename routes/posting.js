@@ -254,14 +254,14 @@ router.post("/report/:postId", isLoggedIn, async (req, res) => {
 
   try {
     const { nickname } = req.session.passport.user[0];
-    const userId = req.session.passport.user[0].id; // 로그인한 사용자의 ID
-    const { postId } = req.params; // 신고할 게시물의 ID
+    const userId = Number(req.session.passport.user[0].id); // 로그인한 사용자의 ID
+    const { postId } = Number(req.params); // 신고할 게시물의 ID
     const { reason, description } = req.body; // 신고 이유와 상세 설명
     const createTime = new Date(); // 신고 시간
 
     // 신고 정보를 데이터베이스에 저장하는 SQL 쿼리
     const reportSql =
-      "INSERT INTO reports (userId, nickname, postId, reason, description, createTime) VALUES (?, ?, ?, ?, ?, ?)";
+      "INSERT INTO reports (userId, nickname, postId, reason, createTime) VALUES (?, ?, ?, ?, ?)";
 
     // SQL 쿼리 실행
     await db.query(reportSql, [
@@ -269,7 +269,6 @@ router.post("/report/:postId", isLoggedIn, async (req, res) => {
       nickname,
       postId,
       reason,
-      description,
       createTime,
     ]);
 
