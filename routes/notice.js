@@ -82,6 +82,7 @@ router.get("/", isLoggedIn, async (req, res) => {
 //2. 특정 공지 조회하기
 router.get("/:id", isLoggedIn, async (req, res) => {
   try {
+    const id = req.params.id;
     const allSql = "SELECT * FROM notices";
     const [results] = await db.query(allSql);
     if (results.length === 0) {

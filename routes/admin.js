@@ -3,10 +3,11 @@ const router = express.Router();
 const db = require("../config/db");
 const passport = require("../config/passport");
 const { isnotloggedin, isLoggedIn, isAdmin } = require("../config/middleware");
+const { unsubscribe } = require("./admin");
 
-//회원관리기능
+//1.회원 관리 기능
+//1.1 전체 회원 조회
 router.get("/allusers", isLoggedIn, isAdmin, async (req, res) => {
-  //전체 회원정보 불러오기
   try {
     const allUserSql =
       //hitDate (최근 로그인 시간, 계정상태..휴먼 , 탈퇴 게정인지) 추가
@@ -19,12 +20,32 @@ router.get("/allusers", isLoggedIn, isAdmin, async (req, res) => {
   }
 });
 
-//게시글 관리 기능
-//게시글 전체 조회
+//1.2 회원 삭제 기능
+router.delete("/user/:id", isLoggedIn, isAdmin, async (req, res) => {
+  const userId = req.params.id;
+  try {
+    const userSql = "SELECT * FROM users WHERE id =? ";
+    const [users] = await db.query(userSql, userId);
+    if (users.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "해당하는 유저가 존재하지 않습니다. " });
+    }
+
+    const deleteSql = "DELETE FROM users WHERE id =?";
+    const [results] = await db.query(deleteSql, userId);
+    res.status(200).json({ message: "해당 유저가 삭제되었습니다. " });
+  } catch (error) {
+    res.status(500).json({ message: "서버에러 " });
+    console.error(error);
+  }
+});
+
+//2. 게시글 관리 기능
+//2.1 게시글 전체 조회
 router.get("/allposts", isLoggedIn, isAdmin, async (req, res) => {
   try {
-    const allPostSql =
-      "SELECT id, nickname, title, writeTime, tag, category FROM postings";
+    const allPostSql = "SELECT * FROM postings";
     const [results] = await db.query(allPostSql);
     res.status(200).json({ content: results });
   } catch (error) {
@@ -33,26 +54,8 @@ router.get("/allposts", isLoggedIn, isAdmin, async (req, res) => {
   }
 });
 
-//특정 게시글 조회
-router.get("/allposts/:id", isLoggedIn, isAdmin, async (req, res) => {
-  const postId = Number(req.params.id);
-  try {
-    const postSql = "SELECT * FROM postings WHERE id = ?";
-    const [results] = await db.query(postSql, postId);
-    if (results.length === 0) {
-      return res
-        .status(404)
-        .json({ message: "해당 게시글을 찾을 수 없습니다. " });
-    }
-    res.json({ content: results[0] });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "서버 오류입니다. " });
-  }
-});
-
-//게시글 삭제하기
-router.delete("/allposts/:id", isLoggedIn, isAdmin, async (req, res) => {
+//2.2 게시글 삭제하기
+router.delete("/posting/:id", isLoggedIn, isAdmin, async (req, res) => {
   const postId = Number(req.params.id);
   try {
     //해당 게시글이 존재하는지
@@ -75,8 +78,8 @@ router.delete("/allposts/:id", isLoggedIn, isAdmin, async (req, res) => {
   }
 });
 
-//신고 기능
-//신고 목록 조회하기
+//3. 신고 관리 기능
+//3.1 전체 신고 목록 조회하기
 router.get("/report", isLoggedIn, isAdmin, async (req, res) => {
   try {
     const reportSql = "SELECT id, nickname, description FROM reports ";
@@ -87,7 +90,8 @@ router.get("/report", isLoggedIn, isAdmin, async (req, res) => {
     console.error(error);
   }
 });
-//특정 신고 목록 조회하기
+
+//3.2 특정 신고 목록 조회하기
 router.get("/report/:id", isLoggedIn, isAdmin, async (req, res) => {
   const reportId = req.params.id;
   try {
@@ -103,6 +107,19 @@ router.get("/report/:id", isLoggedIn, isAdmin, async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "서버에러 " });
+  }
+});
+
+//4. 댓글 관리 기능
+//4.1 전체 댓글 조회하기
+router.get("/allcomments", isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const allcommetSql = "SELECT * FROM comments";
+    const [results] = await db.query(allcommetSql);
+    res.status(200).json({ content: results });
+  } catch (error) {
+    res.status(500).json({ message: "댓글 서버 에러 " });
+    console.error(error);
   }
 });
 
