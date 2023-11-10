@@ -5,9 +5,9 @@ const passport = require("../config/passport");
 const { isnotloggedin, isLoggedIn, isAdmin } = require("../config/middleware");
 const { unsubscribe } = require("./admin");
 
-//회원관리기능
+//1.회원 관리 기능
+//1.1 전체 회원 조회
 router.get("/allusers", isLoggedIn, isAdmin, async (req, res) => {
-  //전체 회원정보 불러오기
   try {
     const allUserSql =
       //hitDate (최근 로그인 시간, 계정상태..휴먼 , 탈퇴 게정인지) 추가
@@ -20,7 +20,7 @@ router.get("/allusers", isLoggedIn, isAdmin, async (req, res) => {
   }
 });
 
-//회원 삭제 기능
+//1.2 회원 삭제 기능
 router.delete("/user/:id", isLoggedIn, isAdmin, async (req, res) => {
   const userId = req.params.id;
   try {
@@ -41,8 +41,8 @@ router.delete("/user/:id", isLoggedIn, isAdmin, async (req, res) => {
   }
 });
 
-//게시글 관리 기능
-//게시글 전체 조회
+//2. 게시글 관리 기능
+//2.1 게시글 전체 조회
 router.get("/allposts", isLoggedIn, isAdmin, async (req, res) => {
   try {
     const allPostSql = "SELECT * FROM postings";
@@ -54,25 +54,7 @@ router.get("/allposts", isLoggedIn, isAdmin, async (req, res) => {
   }
 });
 
-//특정 게시글 조회
-// router.get("/allposts/:id", isLoggedIn, isAdmin, async (req, res) => {
-//   const postId = Number(req.params.id);
-//   try {
-//     const postSql = "SELECT * FROM postings WHERE id = ?";
-//     const [results] = await db.query(postSql, postId);
-//     if (results.length === 0) {
-//       return res
-//         .status(404)
-//         .json({ message: "해당 게시글을 찾을 수 없습니다. " });
-//     }
-//     res.json({ content: results[0] });
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ message: "서버 오류입니다. " });
-//   }
-// });
-
-//게시글 삭제하기
+//2.2 게시글 삭제하기
 router.delete("/posting/:id", isLoggedIn, isAdmin, async (req, res) => {
   const postId = Number(req.params.id);
   try {
@@ -96,8 +78,8 @@ router.delete("/posting/:id", isLoggedIn, isAdmin, async (req, res) => {
   }
 });
 
-//신고 기능
-//신고 목록 조회하기
+//3. 신고 관리 기능
+//3.1 전체 신고 목록 조회하기
 router.get("/report", isLoggedIn, isAdmin, async (req, res) => {
   try {
     const reportSql = "SELECT id, nickname, description FROM reports ";
@@ -108,7 +90,8 @@ router.get("/report", isLoggedIn, isAdmin, async (req, res) => {
     console.error(error);
   }
 });
-//특정 신고 목록 조회하기
+
+//3.2 특정 신고 목록 조회하기
 router.get("/report/:id", isLoggedIn, isAdmin, async (req, res) => {
   const reportId = req.params.id;
   try {
@@ -124,6 +107,19 @@ router.get("/report/:id", isLoggedIn, isAdmin, async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "서버에러 " });
+  }
+});
+
+//4. 댓글 관리 기능
+//4.1 전체 댓글 조회하기
+router.get("/allcomments", isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const allcommetSql = "SELECT * FROM comments";
+    const [results] = await db.query(allcommetSql);
+    res.status(200).json({ content: results });
+  } catch (error) {
+    res.status(500).json({ message: "댓글 서버 에러 " });
+    console.error(error);
   }
 });
 
