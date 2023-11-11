@@ -29,6 +29,11 @@ const validatePassword = (password) => {
   return passwordRegex.test(password);
 };
 
+const validateNickname = (nickname) => {
+  const regex = /^[a-zA-Z0-9가-힣]{2,16}$/;
+  return regex.test(nickname);
+};
+
 //내가 작성한 글 불러오는 api
 router.get("/", isLoggedIn, async (req, res) => {
   const userID = req.user[0].id;
@@ -64,6 +69,7 @@ router.post("/changenickname", isLoggedIn, async (req, res) => {
     const sql = `UPDATE users SET nickname = ? WHERE email = ?`;
     const [result] = await db.query(sql, [nickname, req.user[0].email]);
     console.log(result);
+    req.user[0].nickname = nickname;
     res.status(200).json({
       code: 200,
       success: true,
@@ -95,7 +101,7 @@ router.post("/changepw", isLoggedIn, async (req, res) => {
     }
 
     const sql = `SELECT * FROM users WHERE email = ?`;
-    const [user] = await db.query(sql, [email]);
+    const [user] = await db.query(sql, [req.user[0].email]);
     if (bcrypt.compareSync(prepw, user[0].password) === false) {
       return res.status(400).json({
         code: 400,
@@ -106,7 +112,7 @@ router.post("/changepw", isLoggedIn, async (req, res) => {
 
     const hash = await bcrypt.hash(pw1, 12);
     const updateSql = `UPDATE users SET password = ? WHERE email = ?`;
-    const [updateResult] = await db.query(updateSql, [hash, email]);
+    const [updateResult] = await db.query(updateSql, [hash, req.user[0].email]);
     console.log(updateResult);
     res.status(200).json({
       code: 200,
@@ -115,6 +121,7 @@ router.post("/changepw", isLoggedIn, async (req, res) => {
     });
   } catch (err) {
     console.log(err);
+    console.log("이쪽으로갔나?");
     res.status(500).json({ message: "서버에러" });
   }
 });

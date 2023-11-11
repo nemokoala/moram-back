@@ -41,10 +41,10 @@ const validatePassword = (password) => {
   return passwordRegex.test(password);
 };
 
-function validateNickname(nickname) {
+const validateNickname = (nickname) => {
   const regex = /^[a-zA-Z0-9가-힣]{2,16}$/;
   return regex.test(nickname);
-}
+};
 
 router.get("/", async (req, res) => {
   try {
@@ -56,30 +56,31 @@ router.get("/", async (req, res) => {
   }
 });
 
-router.post("/changenickname", isLoggedIn, async (req, res) => {
-  const { nickname } = req.body;
+//완
+// router.post("/changenickname", isLoggedIn, async (req, res) => {
+//   const { nickname } = req.body;
 
-  try {
-    if (!validateNickname(nickname)) {
-      return res.status(400).json({
-        code: 400,
-        success: false,
-        message: "유효한 형식의 닉네임이 아닙니다.",
-      });
-    }
-    const sql = `UPDATE users SET nickname = ? WHERE email = ?`;
-    const [result] = await db.query(sql, [nickname, req.user[0].email]);
-    console.log(result);
-    res.status(200).json({
-      code: 200,
-      success: true,
-      message: "닉네임이 변경되었습니다.",
-    });
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ message: "서버에러" });
-  }
-});
+//   try {
+//     if (!validateNickname(nickname)) {
+//       return res.status(400).json({
+//         code: 400,
+//         success: false,
+//         message: "유효한 형식의 닉네임이 아닙니다.",
+//       });
+//     }
+//     const sql = `UPDATE users SET nickname = ? WHERE email = ?`;
+//     const [result] = await db.query(sql, [nickname, req.user[0].email]);
+//     console.log(result);
+//     res.status(200).json({
+//       code: 200,
+//       success: true,
+//       message: "닉네임이 변경되었습니다.",
+//     });
+//   } catch (err) {
+//     console.log(err);
+//     res.status(500).json({ message: "서버에러" });
+//   }
+// });
 
 router.post("/changepw", async (req, res) => {
   const { email, prepw, newpw } = req.body;
