@@ -15,7 +15,19 @@ const {
   isLoggedIn,
   isNotLoggedIn,
 } = require("../config/middleware");
+const {
+  validateEmail,
+  validatePassword,
+  validateNickname,
+} = require("../config/validation");
 const { type } = require("os");
+const categorylist = [
+  "계정 문의",
+  "개선 사항",
+  "궁금한 점",
+  "오류 신고",
+  "기타",
+];
 
 const requireLogin = (req, res, next) => {
   if (req.session.user) {
@@ -28,23 +40,6 @@ const requireLogin = (req, res, next) => {
 //   const useridRegex = /^[a-zA-Z0-9]{4,10}$/;
 //   return useridRegex.test(userid);
 // };
-
-// Email 유효성 검사 함수, 형식에 맞으면 true 리턴 틀리면 false 리턴
-const validateEmail = (email) => {
-  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-  return emailRegex.test(email);
-};
-// password 유효성 검사 함수, 형식에 맞으면 true 리턴 틀리면 false 리턴
-const validatePassword = (password) => {
-  const passwordRegex =
-    /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
-  return passwordRegex.test(password);
-};
-
-const validateNickname = (nickname) => {
-  const regex = /^[a-zA-Z0-9가-힣]{2,16}$/;
-  return regex.test(nickname);
-};
 
 router.get("/", async (req, res) => {
   try {
@@ -440,7 +435,8 @@ router.post("/ask", async (req, res) => {
       });
     }
     //카테고리 유효성 검사
-    if (category !== "문의" && category !== "건의") {
+
+    if (!categorylist.includes(category)) {
       res.status(400).json({
         code: 400,
         success: false,
@@ -473,4 +469,5 @@ router.post("/ask", async (req, res) => {
     res.status(500).json({ message: "게시글작성서버에러" });
   }
 });
+
 module.exports = router;

@@ -5,6 +5,7 @@ const LocalStrategy = require("passport-local").Strategy;
 const KakaoStrategy = require("passport-kakao").Strategy;
 const bcrypt = require("bcrypt");
 const db = require("../config/db");
+const { search } = require("../routes/profile");
 
 passport.use(
   "local",
@@ -68,34 +69,39 @@ passport.use(
       );
       let user;
       try {
-        [user] = await db.query(
-          "SELECT * FROM users WHERE _id = ? AND platformType = ?",
-          [profile._json.id, "kakao"]
-        );
+        const searchSql =
+          "SELECT * FROM users WHERE email = ? AND platformType = ?";
+        [user] = await db.query(searchSql, [
+          profile._json.kakao_account.email,
+          "kakao",
+        ]);
         console.log("----user: ----", user);
         console.log("----user 끝----");
         console.log("----user.length: ----", user.length);
-
-        //이미 다른 방식으로 가입된 카카오 계정이면 실패
-        const a = 2;
-        // if (user.length > 0 && user[0].platformType !== "kakao")
-        if (a === 1) {
-          console.log("----이미 다른 방식으로 가입된 카카오 계정입니다. ----");
-          return done(null, false, {
-            code: 401,
-            success: false,
-            message: "이미 다른 방식으로 가입된 카카오 계정입니다.",
-          });
-        }
 
         // 이미 가입된 카카오 프로필이면 성공
         if (user.length > 0) {
           console.log("----카카오 계정으로 로그인 시작 ----");
           console.log(profile);
-          done(null, user, { message: "카카오 계정으로 로그인 성공" });
-        }
-        if (user.length === 0) {
+          done(null, user, {
+            code: 200,
+            success: true,
+            message: "카카오 계정으로 로그인 성공",
+          });
+        } else if (user.length === 0) {
           console.log("----카카오 계정으로 회원가입 시작 ----");
+
+          // 로컬로 회원가입된 이메일이 있는경우
+          try {
+            const searchSql2 = "SELECT * FROM users WHERE email = ?";
+            const [user2] = await db.query(searchSql2, [
+              profile._json.kakao_account.email,
+            ]);
+          } catch (err) {
+            console.log(err);
+            done(err);
+          }
+
           let results;
           try {
             [results] = await db.query(
@@ -110,8 +116,10 @@ passport.use(
             );
           } catch (err) {
             console.log(err);
+            done(err);
           }
           done(null, results, { message: "카카오 계정으로 회원가입 성공" });
+        } else {
         }
       } catch (error) {
         console.error(error);
