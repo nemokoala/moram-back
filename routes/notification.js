@@ -25,7 +25,7 @@ router.get("/:userId", isLoggedIn, async (req, res) => {
     const [notifications] = await db.query(selectNotificationSql, [userId]);
 
     if (notifications.length === 0) {
-      return res.status(404).json({ message: "알림을 찾을 수 없습니다." });
+      return res.status(400).json({ message: "알림이 없습니다." });
     }
 
     res.status(200).json({
@@ -45,7 +45,7 @@ router.get("/read/:id", isLoggedIn, async (req, res) => {
 
     const checkSql = "SELECT targetUserId FROM notifications WHERE id = ?";
     const [rows] = await db.query(checkSql, [notifyId]);
-    if (rows.targetUserId !== id) {
+    if (rows[0].targetUserId !== id) {
       return res.status(403).json({ message: "올바르지 않은 요청입니다." });
     }
 
@@ -68,7 +68,8 @@ router.delete("/:id", isLoggedIn, async (req, res) => {
 
     const checkSql = "SELECT targetUserId FROM notifications WHERE id = ?";
     const [rows] = await db.query(checkSql, [notifyId]);
-    if (rows.targetUserId !== id) {
+    console.log("rows -> ", rows);
+    if (rows[0].targetUserId !== id) {
       return res.status(403).json({ message: "올바르지 않은 요청입니다." });
     }
 
@@ -76,7 +77,7 @@ router.delete("/:id", isLoggedIn, async (req, res) => {
     await db.query(deleteSql, [notifyId]);
 
     res.status(200).json({
-      message: "알림이 성공적으로 읽혔습니다.",
+      message: "알림이 성공적으로 제거되었습니다.",
     });
   } catch (error) {
     console.error(error);
