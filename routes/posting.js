@@ -67,20 +67,17 @@ router.get("/", async (req, res) => {
   }
 });
 
-// 특정 게시글 조회
-router.get("/specific/:id", async (req, res) => {
+router.get("/popular", async (req, res) => {
   try {
-    const postingSql = "SELECT * FROM postings WHERE id = ?";
-    const [results] = await db.query(postingSql, [req.params.id]);
-    if (results.length === 0) {
-      return res.status(404).json({ message: "게시물을 찾을 수 없습니다." });
-    }
-    // 조회수 증가
-    const updateHitCountSql =
-      "UPDATE postings SET hitCount = hitCount + 1 WHERE id = ?";
-    await db.query(updateHitCountSql, [req.params.id]);
+    // 좋아요 수가 가장 많은 상위 3개 게시글을 선택하는 SQL 쿼리
+    const popularSql =
+      "SELECT * FROM postings ORDER BY likesCount DESC LIMIT 3";
 
-    res.json({ content: results[0] });
+    // SQL 쿼리 실행
+    const [results] = await db.query(popularSql);
+
+    // 결과 반환
+    res.status(200).json({ content: results });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "서버 오류입니다." });
@@ -274,22 +271,6 @@ router.post("/report/:postId", isLoggedIn, async (req, res) => {
   }
 });
 
-// router.get("/popular", async (req, res) => {
-//   try {
-//     // 좋아요 수가 가장 많은 상위 3개 게시글을 선택하는 SQL 쿼리
-//     const popularSql = "SELECT * FROM postings ORDER BY likesCount DESC LIMIT 3";
-
-//     // SQL 쿼리 실행
-//     const [results] = await db.query(popularSql);
-
-//     // 결과 반환
-//     res.json({ content: results });
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ message: "서버 오류입니다." });
-//   }
-// });
-
 router.get("/search", async (req, res) => {
   try {
     const { keyword, page = 1 } = req.query;
@@ -328,6 +309,26 @@ router.get("/imgurl", isLoggedIn, getUploadUrls, async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: "서버 오류입니다." });
     console.error(error);
+  }
+});
+
+// 특정 게시글 조회
+router.get("/:id", async (req, res) => {
+  try {
+    const postingSql = "SELECT * FROM postings WHERE id = ?";
+    const [results] = await db.query(postingSql, [req.params.id]);
+    if (results.length === 0) {
+      return res.status(404).json({ message: "게시물을 찾을 수 없습니다." });
+    }
+    // 조회수 증가
+    const updateHitCountSql =
+      "UPDATE postings SET hitCount = hitCount + 1 WHERE id = ?";
+    await db.query(updateHitCountSql, [req.params.id]);
+
+    res.json({ content: results[0] });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "서버 오류입니다." });
   }
 });
 
