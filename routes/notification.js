@@ -8,7 +8,7 @@ router.get("/:userId", isLoggedIn, async (req, res) => {
     try {
       const userId = Number(req.params.userId);
   
-      const selectNotificationSql = "SELECT * FROM notifications WHERE targetuserId = ? AND read = 0 ORDER BY id DESC";
+      const selectNotificationSql = "SELECT * FROM notifications WHERE targetUserId = ? AND readType = 0 ORDER BY id DESC";
  
       const [notifications] = await db.query(selectNotificationSql, [userId]);
   
@@ -30,7 +30,7 @@ router.get("/:userId", isLoggedIn, async (req, res) => {
     try {
       const notifyId = Number(req.params.id);
   
-      const updateSql = "UPDATE notifications SET read = 1 WHERE id = ?";
+      const updateSql = "UPDATE notifications SET readType = 1 WHERE id = ?";
       await db.query(updateSql, [notifyId]);
   
       res.status(200).json({

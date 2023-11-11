@@ -68,7 +68,7 @@ router.get("/", async (req, res) => {
 });
 
 // 특정 게시글 조회
-router.get("/:id", async (req, res) => {
+router.get("/specific/:id", async (req, res) => {
   try {
     const postingSql = "SELECT * FROM postings WHERE id = ?";
     const [results] = await db.query(postingSql, [req.params.id]);
@@ -113,10 +113,11 @@ router.post("/", isLoggedIn, async (req, res) => {
   }
 
   // 제목과 내용의 최소/최대 길이 검사
-  const minTitleLength = 4;
+  // 클라이언트 측에서 500자 이상이면 서버요청 못하게 막을 수 있나
+  const minTitleLength = 2;
   const maxTitleLength = 30;
-  const minContentLength = 10;
-  const maxContentLength = 2000;
+  const minContentLength = 4;
+  const maxContentLength = 500;
 
   if (title.length < minTitleLength || title.length > maxTitleLength) {
     return res.status(400).json({
@@ -280,6 +281,7 @@ router.post("/report/:postId", isLoggedIn, async (req, res) => {
 });
 
 router.get("/popular", async (req, res) => {
+  
   try {
     // 좋아요 수가 가장 많은 상위 3개 게시글을 선택하는 SQL 쿼리
     const popularSql = "SELECT * FROM postings ORDER BY likesCount DESC LIMIT 3";
@@ -298,35 +300,31 @@ router.get("/popular", async (req, res) => {
 
 router.get("/search", async (req, res) => {
   try {
-    const { keyword, page = 1 } = req.query; // 검색어와 페이지 번호를 받습니다. 페이지 번호가 없는 경우 기본값 1
+    const { keyword, page = 1 } = req.query;
 
-    if (!keyword) {
-      return res.status(400).json({ message: "검색어를 입력해주세요." }); // 검색어가 없는 경우 에러 메시지를 반환
+    if (!keyword || keyword.length < 2) {
+      return res.status(400).json({ message: "검색어는 두 글자 이상 입력해주세요." });
     }
 
-    // 검색어가 제목, 내용, 태그 중 어디에든 포함되어 있는 게시물을 찾는 SQL 쿼리
-    // 검색 결과를 페이지 당 10개씩 제한, 페이지 번호에 따라 결과를 건너뛰는 LIMIT과 OFFSET을 사용
     const searchSql =
       "SELECT id, userId, title, nickname, writeTime, hitCount, likesCount, tag, category FROM postings \
       WHERE title LIKE ? OR content LIKE ? LIMIT 10 OFFSET ?";
 
-    // SQL의 LIKE 연산자를 사용하여 검색어가 포함된 게시물 찾기
-    // 검색어 앞뒤에 '%'를 붙여 검색어가 어디에든 포함된 경우를 찾을 수 있음
-    // LIMIT과 OFFSET에 사용할 값을 계산하여 쿼리 파라미터에 추가
     const queryParams = [`%${keyword}%`, `%${keyword}%`, (page - 1) * 10];
 
     const [results] = await db.query(searchSql, queryParams);
 
     if (results.length === 0) {
-      return res.status(404).json({ message: "검색 결과가 없습니다." }); // 검색 결과가 없는 경우 에러 메시지 반환
+      return res.status(404).json({ message: "검색 결과가 없습니다." });
     }
 
-    res.json({ content: results }); // 검색 결과 반환
+    res.json({ content: results });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "서버 오류입니다." });
   }
 });
+
 
 router.get("/imgurl", isLoggedIn, getUploadUrls, async (req, res) => {
   try {
