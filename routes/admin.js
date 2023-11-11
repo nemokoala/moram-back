@@ -71,6 +71,15 @@ router.delete("/posting/:id", isLoggedIn, isAdmin, async (req, res) => {
     //게시글 삭제하기
     const deleteSql = "DELETE FROM postings WHERE id = ? ";
     const [results] = await db.query(deleteSql, postId);
+
+    //aws 이미지 삭제
+    if (posts[0].img1Url)
+      await deleteImageFromS3("moram", posts[0].img1Url.split(".com/")[1]);
+    if (posts[0].img2Url)
+      await deleteImageFromS3("moram", posts[0].img2Url.split(".com/")[1]);
+    if (posts[0].img3Url)
+      await deleteImageFromS3("moram", posts[0].img3Url.split(".com/")[1]);
+
     res.status(200).json({ message: "해당 게시글이 삭제되었습니다." });
   } catch (error) {
     res.status(500).json({ message: "서버 오류입니다. " });

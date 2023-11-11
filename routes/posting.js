@@ -4,7 +4,7 @@ const db = require("../config/db");
 const passport = require("../config/passport");
 const { isLoggedIn } = require("../config/middleware");
 const { categoryList, tagList } = require("../config/categorytagList");
-const { getUploadUrls } = require("../config/aws");
+const { getUploadUrls, deleteImageFromS3 } = require("../config/aws");
 
 /*router.get("/test", (req, res) => {
   res.send("test");
@@ -233,7 +233,8 @@ router.delete("/:id", isLoggedIn, async (req, res) => {
 
   try {
     // 먼저 해당 게시글의 작성자 ID를 조회합니다.
-    const selectSql = "SELECT userId FROM postings WHERE id = ?";
+    const selectSql =
+      "SELECT userId,img1Url,img2Url,img3Url FROM postings WHERE id = ?";
     const [rows] = await db.query(selectSql, [req.params.id]);
     if (!rows.length) {
       return res.status(404).json({ message: "게시물을 찾을 수 없습니다." });
@@ -246,6 +247,14 @@ router.delete("/:id", isLoggedIn, async (req, res) => {
     // 게시글의 작성자가 확인되었으면 게시글을 삭제합니다.
     const deleteSql = "DELETE FROM postings WHERE id = ?";
     const [results] = await db.query(deleteSql, [req.params.id]);
+
+    //aws 이미지 삭제
+    if (rows[0].img1Url)
+      await deleteImageFromS3("moram", rows[0].img1Url.split(".com/")[1]);
+    if (rows[0].img2Url)
+      await deleteImageFromS3("moram", rows[0].img2Url.split(".com/")[1]);
+    if (rows[0].img3Url)
+      await deleteImageFromS3("moram", rows[0].img3Url.split(".com/")[1]);
 
     res.json({ message: "게시물이 삭제되었습니다." });
   } catch (error) {

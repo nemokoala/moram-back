@@ -68,7 +68,7 @@ const { isnotloggedin, isLoggedIn, isAdmin } = require("../config/middleware");
 // });
 
 //1. 공지 전체 조회하기
-router.get("/", isLoggedIn, async (req, res) => {
+router.get("/", async (req, res) => {
   try {
     const allSql = "SELECT id, title, writeTime, nickname FROM notices";
     const [results] = await db.query(allSql);
@@ -80,7 +80,7 @@ router.get("/", isLoggedIn, async (req, res) => {
 });
 
 //2. 특정 공지 조회하기
-router.get("/:id", isLoggedIn, async (req, res) => {
+router.get("/:id", async (req, res) => {
   try {
     const id = req.params.id;
     const allSql = "SELECT * FROM notices";
