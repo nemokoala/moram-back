@@ -37,7 +37,12 @@ router.get("/", isLoggedIn, async (req, res) => {
     const [postings] = await db.query(postingSql, [userID]);
     const commentSql = "SELECT * FROM comments WHERE userId = ?";
     const [comments] = await db.query(commentSql, [userID]);
-    res.status(200).json({ posting: postings, comment: comments });
+    res.status(200).json({
+      posting: postings,
+      comment: comments,
+      email: req.user[0].email,
+      nickname: req.user[0].nickname,
+    });
   } catch (err) {
     console.log(err);
 
