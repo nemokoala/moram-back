@@ -18,6 +18,13 @@ router.get("/", async (req, res) => {
     let endIdSql = "SELECT id FROM postings";
     let queryParams = [];
     let conditions = [];
+
+    if (search.length === 1) {
+      return res
+        .status(400)
+        .json({ message: "검색어는 두 글자 이상 입력해주세요." });
+    }
+
     if (category || tag || lastId || search) {
       if (category) {
         conditions.push("category = ?");
