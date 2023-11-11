@@ -123,4 +123,31 @@ router.get("/allcomments", isLoggedIn, isAdmin, async (req, res) => {
   }
 });
 
+//4.2 댓글 삭제 하기
+router.delete("/comment/:id", isLoggedIn, isAdmin, async (req, res) => {
+  const commentId = Number(req.params.id);
+  try {
+    const commentSql = "SELECT * FROM comments WHERE id=? ";
+    const [comments] = await db.query(commentSql, commentId);
+
+    if (comments.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "해당하는 댓글이 존재하지 않습니다." });
+    }
+
+    const postId = comments[0].postId;
+    // 댓글 수 삭제
+    const addCountSql =
+      "UPDATE postings SET commentCount = commentCount - 1 WHERE id = ?";
+    await db.query(addCountSql, postId);
+
+    const deleteSql = "DELETE FROM comments WHERE id =? ";
+    const [results] = await db.query(deleteSql, commentId);
+    res.status(200).json({ message: "댓글이 삭제되었습니다." });
+  } catch (error) {
+    res.status(500).json({ message: "댓글 삭제 서버 에러" });
+  }
+});
+
 module.exports = router;

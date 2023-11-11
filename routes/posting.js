@@ -264,13 +264,7 @@ router.post("/report/:postId", isLoggedIn, async (req, res) => {
       "INSERT INTO reports (userId, nickname, postId, reason, createTime) VALUES (?, ?, ?, ?, ?)";
 
     // SQL 쿼리 실행
-    await db.query(reportSql, [
-      userId,
-      nickname,
-      postId,
-      reason,
-      createTime,
-    ]);
+    await db.query(reportSql, [userId, nickname, postId, reason, createTime]);
 
     res.status(200).json({ message: "신고가 접수되었습니다." });
   } catch (error) {
@@ -279,22 +273,21 @@ router.post("/report/:postId", isLoggedIn, async (req, res) => {
   }
 });
 
-router.get("/popular", async (req, res) => {
-  try {
-    // 좋아요 수가 가장 많은 상위 3개 게시글을 선택하는 SQL 쿼리
-    const popularSql = "SELECT * FROM postings ORDER BY likesCount DESC LIMIT 3";
-    
-    // SQL 쿼리 실행
-    const [results] = await db.query(popularSql);
+// router.get("/popular", async (req, res) => {
+//   try {
+//     // 좋아요 수가 가장 많은 상위 3개 게시글을 선택하는 SQL 쿼리
+//     const popularSql = "SELECT * FROM postings ORDER BY likesCount DESC LIMIT 3";
 
-    // 결과 반환
-    res.json({ content: results });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "서버 오류입니다." });
-  }
-});
+//     // SQL 쿼리 실행
+//     const [results] = await db.query(popularSql);
 
+//     // 결과 반환
+//     res.json({ content: results });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ message: "서버 오류입니다." });
+//   }
+// });
 
 router.get("/search", async (req, res) => {
   try {
