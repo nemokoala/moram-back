@@ -199,8 +199,35 @@ router.post("/mailverify", async (req, res, next) => {
 
 router.get("/test", (req, res) => {
   //현재시간
-  const now = new Date();
+  now = new Date();
   console.log(now);
+  console.log(`${new Date(Date.now() + 1000 * 60 * 5)}`);
+  const kstTime = now.toLocaleString("ko-KR", { timeZone: "Asia/Seoul" });
+  const sql = `INSERT INTO emailVerification (email, authcode, expiresAt) VALUES (?, ?, ?)`;
+  db.query(sql, [1, 1, kstTime]);
+  console.log(kstTime);
+  res.json(kstTime);
 });
 
+router.get("/test2", (req, res) => {
+  const expiresAt = new Date(Date.now() + 9 * 60 * 60 * 1000 + 5 * 60 * 1000); // UTC+9
+  // const expiresAtTimestamp = `${expiresAt.getUTCFullYear()}-${(
+  //   "0" +
+  //   (expiresAt.getUTCMonth() + 1)
+  // ).slice(-2)}-${("0" + expiresAt.getUTCDate()).slice(-2)} ${(
+  //   "0" + expiresAt.getUTCHours()
+  // ).slice(-2)}:${("0" + expiresAt.getUTCMinutes()).slice(-2)}:${(
+  //   "0" + expiresAt.getUTCSeconds()
+  // ).slice(-2)}`;
+  try {
+    const sql = `INSERT INTO emailVerification (email, authcode, expiresAt) VALUES (?, ?, ?)`;
+    db.query(sql, [1, 1, expiresAt]);
+    res.json({
+      1: expiresAt,
+      2: new Date(Date.now()),
+    });
+  } catch (err) {
+    console.log(err);
+  }
+});
 module.exports = router;

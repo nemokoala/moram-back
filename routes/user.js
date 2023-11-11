@@ -56,6 +56,31 @@ router.get("/", async (req, res) => {
   }
 });
 
+router.post("/changenickname", isLoggedIn, async (req, res) => {
+  const { nickname } = req.body;
+
+  try {
+    if (!validateNickname(nickname)) {
+      return res.status(400).json({
+        code: 400,
+        success: false,
+        message: "유효한 형식의 닉네임이 아닙니다.",
+      });
+    }
+    const sql = `UPDATE users SET nickname = ? WHERE email = ?`;
+    const [result] = await db.query(sql, [nickname, req.user[0].email]);
+    console.log(result);
+    res.status(200).json({
+      code: 200,
+      success: true,
+      message: "닉네임이 변경되었습니다.",
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "서버에러" });
+  }
+});
+
 router.post("/changepw", async (req, res) => {
   const { email, prepw, newpw } = req.body;
 
@@ -146,7 +171,8 @@ router.post("/ex", async (req, res) => {
 
 router.post("/certify", async (req, res) => {
   console.log(req.body);
-  const { univName, verifiedEmail, receivedEmail } = req.body;
+  const { univName, receivedEmail } = req.body;
+  const verifiedEmail = req.user[0].email;
   //email = c1004sos@wku.ac.kr
   const sql = `SELECT * FROM univList WHERE univName = ?`;
   const [result] = await db.query(sql, [univName]);
@@ -353,17 +379,10 @@ router.get("/kakao/callback", (req, res, next) => {
   })(req, res, next); // 미들웨어 내의 미들웨어에는 호출 별도로 진행
 });
 
-router.post("/deleteuser", isLoggedIn, async (req, res) => {
-  const { email } = req.body;
+router.delete("/user", isLoggedIn, async (req, res) => {
+  const email = req.user[0].email;
 
   try {
-    if (req.user[0].email !== email) {
-      return res.status(400).json({
-        code: 400,
-        success: false,
-        message: "세션오류",
-      });
-    }
     console.log(1);
     const sql = `DELETE FROM users WHERE email = ?`;
     const [result] = await db.query(sql, [email]);
@@ -375,48 +394,82 @@ router.post("/deleteuser", isLoggedIn, async (req, res) => {
     });
   } catch (err) {
     console.log(err);
-    res.status(500).json({ message: "서버에러" });
+    res.status(500).json({ message: "회원탈퇴서버에러" });
   }
 });
 
 router.post("/ask", async (req, res) => {
-  const { email, category, title, content } = req.body;
-
   try {
+    const { email, category, title, content } = req.body;
+
+    if (
+      email.length === 0 ||
+      category.length === 0 ||
+      title.length === 0 ||
+      content.length === 0
+    ) {
+      res.status(400).json({
+        code: 400,
+        success: false,
+        message: "모든 항목을 입력해주세요.",
+      });
+    }
+    //오버플로우 방지
+    if (title.length > 100) {
+      res.status(400).json({
+        code: 400,
+        success: false,
+        message: "제목은 100자 이내로 입력해주세요.",
+      });
+    }
+    //오버플로우 방지
+    if (content.length > 1000) {
+      res.status(400).json({
+        code: 400,
+        success: false,
+        message: "내용은 1000자 이내로 입력해주세요.",
+      });
+    }
+    //이메일 유효성 검사
+    if (!validateEmail(email)) {
+      res.status(400).json({
+        code: 400,
+        success: false,
+        message: "유효한 형식의 이메일이 아닙니다.",
+      });
+    }
+    //카테고리 유효성 검사
+    if (category !== "문의" && category !== "건의") {
+      res.status(400).json({
+        code: 400,
+        success: false,
+        message: "유효한 형식의 카테고리가 아닙니다.",
+      });
+    }
+    console.log("유효성 검사 완료");
     let transporter = smtpTransport;
     let mailOptions = {
-      from: "c1004sos@1gmail.com", //송신할 이메일
-      to: data.mail, //수신할 이메일
-      subject: "[모람모람]아이디/비밀번호 정보입니다.",
+      from: `${process.env.EMAIL}`, //송신할 이메일
+      to: `${process.env.EMAIL}`, //수신할 이메일
+      subject: `[모람모람/문의(${category})] 제목: ${title}`,
       html: ` <div>
-      <p>요청한 계정 정보는 아래와 같습니다.</p>
+      <p>문의 내용은 아래와 같습니다.</p>
       <hr />
       <ul>
-        <li>사이트 : https://www.moram.com</li>
-        <li>이메일 : ${user[0].email}</li>
-        <li>닉네임 : ${user[0].nickname}</li>
-        <li>비밀번호 :${newpassword}</li>
+        <li>답변받을이메일 : ${email}</li>
       </ul>
-      <span>아래 링크를 클릭하면 위에 적힌 비밀번호로 변경됩니다.</span>
-      <p>로그인 후 다른 비밀번호로 변경해 주시기 바랍니다.</p>
-      <p>링크를 클릭하지 않으면 비밀번호가 변경되지 않습니다.</p>
-      <a
-        href="http://localhost:8000/login/reset/${token}"
-        rel="noreferrer noopener"
-        target="_blank"
-        >http://localhost:8000/login/reset/${token}</a
-      >
+      <span>${title}</span>
+      <p>${content}</p>
     </div>`,
     };
     console.log(mailOptions);
     await transporter.sendMail(mailOptions);
     console.log("메일 발송 성공");
 
-    console.log(data);
     res.status(200).json({ message: "메일발송성공" });
   } catch (err) {
     console.log(err);
-    res.status(500).json({ message: "서버에러" });
+    res.status(500).json({ message: "게시글작성서버에러" });
   }
 });
 module.exports = router;

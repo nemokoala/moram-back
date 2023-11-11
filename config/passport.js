@@ -77,7 +77,7 @@ passport.use(
         console.log("----user.length: ----", user.length);
 
         //이미 다른 방식으로 가입된 카카오 계정이면 실패
-        const a = 1;
+        const a = 2;
         // if (user.length > 0 && user[0].platformType !== "kakao")
         if (a === 1) {
           console.log("----이미 다른 방식으로 가입된 카카오 계정입니다. ----");
