@@ -4,6 +4,7 @@ const db = require("../config/db");
 const passport = require("../config/passport");
 const { isnotloggedin, isLoggedIn, isAdmin } = require("../config/middleware");
 const { unsubscribe } = require("./admin");
+const { deleteImageFromS3 } = require("../config/aws");
 
 //1.회원 관리 기능
 //1.1 전체 회원 조회

@@ -105,20 +105,13 @@ router.post("/:postId", isLoggedIn, async (req, res) => {
               insertNotificationSql,
               replyNotification
             );
-
-            await db.query(insertNotificationSql, replyNotification);
           }
         }
       }
     }
 
-    res.status(200).json({
+    return res.status(200).json({
       message: "댓글이 성공적으로 작성되었습니다.",
-      comment: {
-        userNickname,
-        content,
-        writeTime,
-      },
     });
   } catch (error) {
     console.error(error);
