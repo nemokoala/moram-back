@@ -346,7 +346,7 @@ router.get("/test", async (req, res) => {
   );
 });
 
-router.get("/kakao", passport.authenticate("kakao"));
+router.get("/kakao", isNotLoggedIn, passport.authenticate("kakao"));
 
 router.get("/kakao/callback", (req, res, next) => {
   passport.authenticate("kakao", (err, user, info) => {
@@ -356,16 +356,21 @@ router.get("/kakao/callback", (req, res, next) => {
     }
     if (!user) {
       console.log(info);
-      return res.json(info);
+      console.log("123");
+      return res.redirect(
+        "http://localhost:3000/login-fail" + JSON.stringify(info)
+      );
     }
 
     // 회원가입된 상태일 경우, 로그인 세션을 생성한다.
+    console.log("456");
     return req.login(user, (error) => {
       if (error) {
         next(error);
       }
       res.redirect(
-        "https://www.moram2.com/login-success?user=" +
+        //https://www.moram2.com/login-success?user=
+        "http:/localhost:3000/login-success?user=" +
           JSON.stringify({
             email: req.user[0].email,
             nickname: req.user[0].nickname,

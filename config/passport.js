@@ -83,7 +83,7 @@ passport.use(
         if (user.length > 0) {
           console.log("----카카오 계정으로 로그인 시작 ----");
           console.log(profile);
-          done(null, user, {
+          return done(null, user, {
             code: 200,
             success: true,
             message: "카카오 계정으로 로그인 성공",
@@ -97,11 +97,19 @@ passport.use(
             const [user2] = await db.query(searchSql2, [
               profile._json.kakao_account.email,
             ]);
+            if (user2.length > 0) {
+              console.log("----카카오 계정으로 회원가입 실패 ----");
+              return done(null, false, {
+                code: 401,
+                success: false,
+                message: "이미 가입한 이메일 계정이 있습니다.",
+              });
+            }
           } catch (err) {
             console.log(err);
-            done(err);
+            return done(err);
           }
-
+          console.log("실행되면안돼");
           let results;
           try {
             [results] = await db.query(
@@ -116,14 +124,16 @@ passport.use(
             );
           } catch (err) {
             console.log(err);
-            done(err);
+            return done(err);
           }
-          done(null, results, { message: "카카오 계정으로 회원가입 성공" });
+          return done(null, results, {
+            message: "카카오 계정으로 회원가입 성공",
+          });
         } else {
         }
       } catch (error) {
         console.error(error);
-        done(error);
+        return done(error);
       }
     }
   )

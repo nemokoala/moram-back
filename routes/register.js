@@ -7,39 +7,27 @@ const session = require("express-session");
 const ejs = require("ejs");
 const axios = require("axios");
 const passport = require("../config/passport");
-const fs = require("fs");
 const smtpTransport = require("../config/email");
 const {
   generatePassword,
   isLoggedIn,
   isNotLoggedIn,
 } = require("../config/middleware");
+const {
+  validateEmail,
+  validatePassword,
+  validateNickname,
+} = require("../config/validation");
 const { type } = require("os");
 router.use(express.urlencoded({ extended: true }));
 router.use(express.json());
 
-// email 유효성 검사 함수, 형식에 맞으면 true, 틀리면 false 리턴
-const validateEmail = (email) => {
-  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-  return emailRegex.test(email);
-};
-// password 유효성 검사 함수, 형식에 맞으면 true, 틀리면 false 리턴
-const validatePassword = (password) => {
-  const passwordRegex =
-    /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
-  return passwordRegex.test(password);
-};
-// nickname 유호성 검사 함수, 형식에 맞으면 true, 틀리면 false 리턴
-function validateNickname(nickname) {
-  const nicknameregex = /^[a-zA-Z0-9가-힣]{2,16}$/;
-  return nicknameregex.test(nickname);
-}
 // router.get("/", (req, res) => {
 //   res.render("register");
 // });
 
 //회원가입페이지
-router.post("/", async (req, res) => {
+router.post("/", isNotLoggedIn, async (req, res) => {
   console.log(req.body);
   const { nickname, email, password } = req.body;
   console.log("잘받아졌나?");
@@ -102,7 +90,7 @@ router.post("/", async (req, res) => {
   }
 });
 
-router.post("/validatenickname", async (req, res, next) => {
+router.post("/validatenickname", isNotLoggedIn, async (req, res, next) => {
   try {
     const { nickname } = req.body;
     const sql = "SELECT * FROM users WHERE nickname = ?";
@@ -126,7 +114,7 @@ router.post("/validatenickname", async (req, res, next) => {
   }
 });
 
-router.post("/mailsend", async (req, res, next) => {
+router.post("/mailsend", isNotLoggedIn, async (req, res, next) => {
   console.log("메일 전송");
   console.log(req.body);
   console.log(1);
