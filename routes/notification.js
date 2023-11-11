@@ -25,7 +25,7 @@ router.get("/:userId", isLoggedIn, async (req, res) => {
     const [notifications] = await db.query(selectNotificationSql, [userId]);
 
     if (notifications.length === 0) {
-      return res.status(400).json({ message: "알림을 찾을 수 없습니다." });
+      return res.status(404).json({ message: "알림을 찾을 수 없습니다." });
     }
 
     res.status(200).json({
@@ -39,8 +39,15 @@ router.get("/:userId", isLoggedIn, async (req, res) => {
 });
 
 router.get("/read/:id", isLoggedIn, async (req, res) => {
+  const { id } = req.session.passport.user[0];
   try {
     const notifyId = Number(req.params.id);
+
+    const checkSql = "SELECT targetUserId FROM notifications WHERE id = ?";
+    const [rows] = await db.query(checkSql, [notifyId]);
+    if (rows.targetUserId !== id) {
+      return res.status(403).json({ message: "올바르지 않은 요청입니다." });
+    }
 
     const updateSql = "UPDATE notifications SET readType = 1 WHERE id = ?";
     await db.query(updateSql, [notifyId]);
@@ -57,6 +64,13 @@ router.get("/read/:id", isLoggedIn, async (req, res) => {
 router.delete("/:id", isLoggedIn, async (req, res) => {
   try {
     const notifyId = Number(req.params.id);
+    const { id } = req.session.passport.user[0];
+
+    const checkSql = "SELECT targetUserId FROM notifications WHERE id = ?";
+    const [rows] = await db.query(checkSql, [notifyId]);
+    if (rows.targetUserId !== id) {
+      return res.status(403).json({ message: "올바르지 않은 요청입니다." });
+    }
 
     const deleteSql = "DELETE from notifications WHERE id = ?";
     await db.query(deleteSql, [notifyId]);

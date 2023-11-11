@@ -330,16 +330,17 @@ router.get("/imgurl", isLoggedIn, getUploadUrls, async (req, res) => {
 
 // 특정 게시글 조회
 router.get("/:id", async (req, res) => {
+  const postId = Number(req.params.id);
   try {
     const postingSql = "SELECT * FROM postings WHERE id = ?";
-    const [results] = await db.query(postingSql, [req.params.id]);
+    const [results] = await db.query(postingSql, [postId]);
     if (results.length === 0) {
       return res.status(404).json({ message: "게시물을 찾을 수 없습니다." });
     }
     // 조회수 증가
     const updateHitCountSql =
       "UPDATE postings SET hitCount = hitCount + 1 WHERE id = ?";
-    await db.query(updateHitCountSql, [req.params.id]);
+    await db.query(updateHitCountSql, [postId]);
 
     res.json({ content: results[0] });
   } catch (error) {
