@@ -67,6 +67,7 @@ router.post("/certuniv", isLoggedIn, async (req, res) => {
   const verifiedEmail = req.user[0].email;
   console.log(`verifiedEmail: ${verifiedEmail}`);
   let emailDomain;
+  console.log("certuniv api 실행");
   try {
     // 대학교 이름이 들어왔는지 확인
     if (!univName) {

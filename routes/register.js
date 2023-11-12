@@ -157,7 +157,7 @@ router.post("/mailsend", isNotLoggedIn, async (req, res, next) => {
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
     const sql = `INSERT INTO emailVerification (email, authcode, expiresAt) VALUES (?, ?, ?)`;
     db.query(sql, [email, authcode, expiresAt]);
-    res.status(200).json({ message: "메일발신성공" });
+    res.status(200).json({ message: "메일 발신 성공" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "서버에러" });
