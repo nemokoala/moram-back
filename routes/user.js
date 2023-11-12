@@ -213,10 +213,13 @@ router.post("/univsearch", async (req, res) => {
   console.log(univName);
   try {
     //univName이 들어가는 모든 대학 검색
-    const sql = "SELECT * FROM univList WHERE univName LIKE ?";
+    const sql = "SELECT univName FROM univList WHERE univName LIKE ?";
     const [result] = await db.query(sql, ["%" + univName + "%"]);
-    res.status(200).json(result);
-    console.log(result);
+    const modifiedData = result.map((item) => {
+      return Object.values(item)[0];
+    });
+    console.log(modifiedData);
+    res.status(200).send(modifiedData);
   } catch (err) {
     res.status(500).json({ message: "대학검색서버에러" });
   }

@@ -126,4 +126,7 @@ router.post("/changepw", isLoggedIn, async (req, res) => {
   }
 });
 
+router.post("/test", async (req, res) => {
+  res.status(200).json({ message: "test" });
+});
 module.exports = router;
