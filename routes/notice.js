@@ -82,9 +82,9 @@ router.get("/", async (req, res) => {
 //2. 특정 공지 조회하기
 router.get("/:id", async (req, res) => {
   try {
-    const id = req.params.id;
-    const allSql = "SELECT * FROM notices";
-    const [results] = await db.query(allSql);
+    const notId = req.params.id;
+    const allSql = "SELECT * FROM notices WHERE id =? ";
+    const [results] = await db.query(allSql, notId);
     if (results.length === 0) {
       return res
         .status(404)
