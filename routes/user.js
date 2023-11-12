@@ -15,36 +15,24 @@ const {
   isLoggedIn,
   isNotLoggedIn,
 } = require("../config/middleware");
+const {
+  validateEmail,
+  validatePassword,
+  validateNickname,
+} = require("../config/validation");
 const { type } = require("os");
+const categorylist = [
+  "계정 문의",
+  "개선 사항",
+  "궁금한 점",
+  "오류 신고",
+  "기타",
+];
 
-const requireLogin = (req, res, next) => {
-  if (req.session.user) {
-    next();
-  } else {
-    res.redirect("/login");
-  }
-};
 // const validateUserId = (userid) => {
 //   const useridRegex = /^[a-zA-Z0-9]{4,10}$/;
 //   return useridRegex.test(userid);
 // };
-
-// Email 유효성 검사 함수, 형식에 맞으면 true 리턴 틀리면 false 리턴
-const validateEmail = (email) => {
-  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-  return emailRegex.test(email);
-};
-// password 유효성 검사 함수, 형식에 맞으면 true 리턴 틀리면 false 리턴
-const validatePassword = (password) => {
-  const passwordRegex =
-    /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
-  return passwordRegex.test(password);
-};
-
-function validateNickname(nickname) {
-  const regex = /^[a-zA-Z0-9가-힣]{2,16}$/;
-  return regex.test(nickname);
-}
 
 router.get("/", async (req, res) => {
   try {
@@ -56,134 +44,101 @@ router.get("/", async (req, res) => {
   }
 });
 
-router.post("/changepw", async (req, res) => {
-  const { email, prepw, newpw } = req.body;
-
-  try {
-    if (email !== req.user[0].email) {
-      return res.status(400).json({
-        code: 400,
-        success: false,
-        message: "현재 로그인세션과 이메일이 일치하지않습니다.",
-      });
-    }
-    if (!validatePassword(newpw)) {
-      return res.status(400).json({
-        code: 400,
-        success: false,
-        message: "유효한 형식의 비밀번호가 아닙니다.",
-      });
-    }
-
-    const sql = `SELECT * FROM users WHERE email = ?`;
-    const [user] = await db.query(sql, [email]);
-    if (bcrypt.compareSync(prepw, user[0].password) === false) {
-      return res.status(400).json({
-        code: 400,
-        success: false,
-        message: "현재 비밀번호가 일치하지않습니다.",
-      });
-    }
-
-    const hash = await bcrypt.hash(newpw, 12);
-    const updateSql = `UPDATE users SET password = ? WHERE email = ?`;
-    const [updateResult] = await db.query(updateSql, [hash, email]);
-    console.log(updateResult);
-    res.status(200).json({
-      code: 200,
-      success: true,
-      message: "비밀번호가 변경되었습니다.",
-    });
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ message: "서버에러" });
-  }
-});
-
-router.get("/logout", async (req, res, next) => {
+//
+router.get("/logout", isLoggedIn, async (req, res, next) => {
   req.logout((err) => {
     if (err) {
       return next(err);
     } else {
       console.log("로그아웃 성공");
-      res.redirect("/user");
+      res.redirect("/");
     }
   });
 
-  router.use((err, req, res, next) => {
-    console.error(err.stack); // 에러 스택 출력
-    res.status(500).json({ message: "서버 에러" });
-  });
-
-  // req.session.save(() => {
-  //   res.redirect("/");
+  // router.use((err, req, res, next) => {
+  //   console.error(err.stack); // 에러 스택 출력
+  //   res.status(500).json({ message: "서버 에러" });
   // });
 });
 
-router.post("/ex", async (req, res) => {
-  const { email } = req.body;
-  console.log(`req.body에 있는 email: ${email}`);
+router.post("/certuniv", isLoggedIn, async (req, res) => {
+  const { univName, receivedEmail } = req.body;
+  console.log(`req.body: ${JSON.stringify(req.body)}`);
+  const verifiedEmail = req.user[0].email;
+  console.log(`verifiedEmail: ${verifiedEmail}`);
+
   try {
-    sql = `SELECT * FROM users WHERE email = ?`;
-    const [user] = await db.query(sql, [email]);
-    console.log(`-----------user------------`);
-    console.log(user.length);
-    console.log(`-----------end------------`);
-    console.log(`-----------user[0]------------`);
-    //console.log(user[0].length);
-    console.log(`-----------end------------`);
-    if (user.length === 0) {
-      return res.status(400).json({ message: "존재하지 않는 이메일입니다." });
+    // 대학교 이름이 들어왔는지 확인
+    if (!univName) {
+      return res.status(400).json({
+        code: 400,
+        success: false,
+        message: "대학교 이름을 입력해주세요.",
+      });
     }
+    // 대학교 이메일이 들어왔는지 확인
+    if (!receivedEmail) {
+      return res.status(400).json({
+        code: 400,
+        success: false,
+        message: "대학교 이메일을 입력해주세요.",
+      });
+    }
+    if (univName.length > 20) {
+      return res.status(400).json({
+        code: 400,
+        success: false,
+        message: "대학교 이름은 20자 이내로 입력해주세요.",
+      });
+    }
+    if (receivedEmail.length > 50) {
+      return res.status(400).json({
+        code: 400,
+        success: false,
+        message: "대학교 이메일은 50자 이내로 입력해주세요.",
+      });
+    }
+
+    const searchSQL = `SELECT * FROM univList WHERE univName = ?`;
+    const [result] = await db.query(searchSQL, [univName]);
+    console.log(`DB에서 받아온 result: ${JSON.stringify(result)}`);
+    // db에 해당 대학교가 있는지 확인
+    if (result.length === 0) {
+      return res.status(400).json({
+        code: 400,
+        success: false,
+        message: "대학교를 찾을 수 없습니다.",
+      });
+    }
+    // 대학교 이메일 형식과 일치하는지 확인
+    const emailDomain = receivedEmail.substring(
+      receivedEmail.lastIndexOf("@") + 1
+    );
+    if (emailDomain !== result[0].email) {
+      return res.status(400).json({
+        code: 400,
+        success: false,
+        message: `대학교 이메일이 일치하지않습니다. 해당 대학 도메인은 ${result[0].email} 입니다.`,
+      });
+    }
+    //토큰 생성
+    const token = crypto.randomBytes(20).toString("hex");
+    // 1일 뒤에 만료되는 토큰
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    //db에 토큰 저장
+    const tokenSql = `INSERT INTO univVerification (univName, receivedEmail, verifiedEmail, token, expiresAt) VALUES (?, ?, ?, ?, ?)`;
+
+    await db.query(tokenSql, [
+      univName,
+      receivedEmail,
+      verifiedEmail,
+      token,
+      expiresAt,
+    ]);
   } catch (err) {
     console.log(err);
+    res.status(500).json({ message: "서버에러" });
   }
-});
-
-// router.get("/certify", (req, res) => {
-//   res.render("certify");
-// });
-
-router.post("/certify", async (req, res) => {
-  console.log(req.body);
-  const { univName, verifiedEmail, receivedEmail } = req.body;
-  //email = c1004sos@wku.ac.kr
-  const sql = `SELECT * FROM univList WHERE univName = ?`;
-  const [result] = await db.query(sql, [univName]);
-  console.log(`DB에서 받아온 result: ${JSON.stringify(result)}`);
-  // db에 해당 대학교가 있는지 확인
-  if (result.length === 0) {
-    return res.status(400).json({
-      code: 400,
-      success: false,
-      message: "대학교를 찾을 수 없습니다.",
-    });
-  }
-  // 대학교 이메일 형식과 일치하는지 확인
-  const emailDomain = receivedEmail.substring(
-    receivedEmail.lastIndexOf("@") + 1
-  );
-  if (emailDomain !== result[0].email) {
-    return res.status(400).json({
-      code: 400,
-      success: false,
-      message: `대학교 이메일이 일치하지않습니다. 해당 대학 도메인은 ${result[0].email} 입니다.`,
-    });
-  }
-  //토큰 생성
-  const token = crypto.randomBytes(20).toString("hex");
-  // 1일 뒤에 만료되는 토큰
-  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
-  //db에 토큰 저장
-  const tokenSql = `INSERT INTO univVerification (univName, receivedEmail, verifiedEmail, token, expiresAt) VALUES (?, ?, ?, ?, ?)`;
-
-  await db.query(tokenSql, [
-    univName,
-    receivedEmail,
-    verifiedEmail,
-    token,
-    expiresAt,
-  ]);
 
   // 대학교 인증 메일 발송
   console.log(emailDomain);
@@ -263,7 +218,7 @@ router.post("/univsearch", async (req, res) => {
     res.status(200).json(result);
     console.log(result);
   } catch (err) {
-    res.status(500).json({ message: "서버에러" });
+    res.status(500).json({ message: "대학검색서버에러" });
   }
 });
 
@@ -324,7 +279,7 @@ router.get("/test", async (req, res) => {
   );
 });
 
-router.get("/kakao", passport.authenticate("kakao"));
+router.get("/kakao", isNotLoggedIn, passport.authenticate("kakao"));
 
 router.get("/kakao/callback", (req, res, next) => {
   passport.authenticate("kakao", (err, user, info) => {
@@ -334,16 +289,21 @@ router.get("/kakao/callback", (req, res, next) => {
     }
     if (!user) {
       console.log(info);
-      return res.json(info);
+      console.log("123");
+      return res.redirect(
+        "http://localhost:3000/login-fail" + JSON.stringify(info)
+      );
     }
 
     // 회원가입된 상태일 경우, 로그인 세션을 생성한다.
+    console.log("456");
     return req.login(user, (error) => {
       if (error) {
         next(error);
       }
       res.redirect(
-        "https://www.moram2.com/login-success?user=" +
+        //https://www.moram2.com/login-success?user=
+        "http:/localhost:3000/login-success?user=" +
           JSON.stringify({
             email: req.user[0].email,
             nickname: req.user[0].nickname,
@@ -353,17 +313,10 @@ router.get("/kakao/callback", (req, res, next) => {
   })(req, res, next); // 미들웨어 내의 미들웨어에는 호출 별도로 진행
 });
 
-router.post("/deleteuser", isLoggedIn, async (req, res) => {
-  const { email } = req.body;
+router.delete("/user", isLoggedIn, async (req, res) => {
+  const email = req.user[0].email;
 
   try {
-    if (req.user[0].email !== email) {
-      return res.status(400).json({
-        code: 400,
-        success: false,
-        message: "세션오류",
-      });
-    }
     console.log(1);
     const sql = `DELETE FROM users WHERE email = ?`;
     const [result] = await db.query(sql, [email]);
@@ -375,48 +328,84 @@ router.post("/deleteuser", isLoggedIn, async (req, res) => {
     });
   } catch (err) {
     console.log(err);
-    res.status(500).json({ message: "서버에러" });
+    res.status(500).json({ message: "회원탈퇴서버에러" });
   }
 });
 
 router.post("/ask", async (req, res) => {
-  const { email, category, title, content } = req.body;
-
   try {
+    const { email, category, title, content } = req.body;
+
+    if (
+      email.length === 0 ||
+      category.length === 0 ||
+      title.length === 0 ||
+      content.length === 0
+    ) {
+      res.status(400).json({
+        code: 400,
+        success: false,
+        message: "모든 항목을 입력해주세요.",
+      });
+    }
+    //오버플로우 방지
+    if (title.length > 100) {
+      res.status(400).json({
+        code: 400,
+        success: false,
+        message: "제목은 100자 이내로 입력해주세요.",
+      });
+    }
+    //오버플로우 방지
+    if (content.length > 1000) {
+      res.status(400).json({
+        code: 400,
+        success: false,
+        message: "내용은 1000자 이내로 입력해주세요.",
+      });
+    }
+    //이메일 유효성 검사
+    if (!validateEmail(email)) {
+      res.status(400).json({
+        code: 400,
+        success: false,
+        message: "유효한 형식의 이메일이 아닙니다.",
+      });
+    }
+    //카테고리 유효성 검사
+
+    if (!categorylist.includes(category)) {
+      res.status(400).json({
+        code: 400,
+        success: false,
+        message: "유효한 형식의 카테고리가 아닙니다.",
+      });
+    }
+    console.log("유효성 검사 완료");
     let transporter = smtpTransport;
     let mailOptions = {
-      from: "c1004sos@1gmail.com", //송신할 이메일
-      to: data.mail, //수신할 이메일
-      subject: "[모람모람]아이디/비밀번호 정보입니다.",
+      from: `${process.env.EMAIL}`, //송신할 이메일
+      to: `${process.env.EMAIL}`, //수신할 이메일
+      subject: `[모람모람/문의(${category})] 제목: ${title}`,
       html: ` <div>
-      <p>요청한 계정 정보는 아래와 같습니다.</p>
+      <p>문의 내용은 아래와 같습니다.</p>
       <hr />
       <ul>
-        <li>사이트 : https://www.moram.com</li>
-        <li>이메일 : ${user[0].email}</li>
-        <li>닉네임 : ${user[0].nickname}</li>
-        <li>비밀번호 :${newpassword}</li>
+        <li>답변받을이메일 : ${email}</li>
       </ul>
-      <span>아래 링크를 클릭하면 위에 적힌 비밀번호로 변경됩니다.</span>
-      <p>로그인 후 다른 비밀번호로 변경해 주시기 바랍니다.</p>
-      <p>링크를 클릭하지 않으면 비밀번호가 변경되지 않습니다.</p>
-      <a
-        href="http://localhost:8000/login/reset/${token}"
-        rel="noreferrer noopener"
-        target="_blank"
-        >http://localhost:8000/login/reset/${token}</a
-      >
+      <span>${title}</span>
+      <p>${content}</p>
     </div>`,
     };
     console.log(mailOptions);
     await transporter.sendMail(mailOptions);
     console.log("메일 발송 성공");
 
-    console.log(data);
     res.status(200).json({ message: "메일발송성공" });
   } catch (err) {
     console.log(err);
-    res.status(500).json({ message: "서버에러" });
+    res.status(500).json({ message: "게시글작성서버에러" });
   }
 });
+
 module.exports = router;

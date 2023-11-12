@@ -1,4 +1,6 @@
 const bcrypt = require("bcrypt");
+
+// api동작할 때 로그인이 되어있어야 할때 사용하는 미들웨어
 exports.isLoggedIn = (req, res, next) => {
   // isAuthenticated()로 검사해 로그인이 되어있으면
   if (req.isAuthenticated()) {
@@ -11,7 +13,7 @@ exports.isLoggedIn = (req, res, next) => {
     });
   }
 };
-
+// api 동작할 때 로그인이 되어있지 않아야 할때 사용하는 미들웨어
 exports.isNotLoggedIn = (req, res, next) => {
   if (!req.isAuthenticated()) {
     next(); // 로그인 안되어있으면 다음 미들웨어
