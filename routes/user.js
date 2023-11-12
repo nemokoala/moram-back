@@ -66,7 +66,7 @@ router.post("/certuniv", isLoggedIn, async (req, res) => {
   console.log(`req.body: ${JSON.stringify(req.body)}`);
   const verifiedEmail = req.user[0].email;
   console.log(`verifiedEmail: ${verifiedEmail}`);
-
+  let emailDomain;
   try {
     // 대학교 이름이 들어왔는지 확인
     if (!univName) {
@@ -111,9 +111,7 @@ router.post("/certuniv", isLoggedIn, async (req, res) => {
       });
     }
     // 대학교 이메일 형식과 일치하는지 확인
-    const emailDomain = receivedEmail.substring(
-      receivedEmail.lastIndexOf("@") + 1
-    );
+    emailDomain = receivedEmail.substring(receivedEmail.lastIndexOf("@") + 1);
     if (emailDomain !== result[0].email) {
       return res.status(400).json({
         code: 400,
@@ -135,16 +133,11 @@ router.post("/certuniv", isLoggedIn, async (req, res) => {
       token,
       expiresAt,
     ]);
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ message: "서버에러" });
-  }
 
-  // 대학교 인증 메일 발송
-  console.log(emailDomain);
+    // 대학교 인증 메일 발송
+    console.log(emailDomain);
 
-  console.log(token);
-  try {
+    console.log(token);
     let transporter = smtpTransport;
     let mailOptions = {
       from: "c1004sos@1gmail.com", //송신할 이메일
@@ -165,11 +158,13 @@ router.post("/certuniv", isLoggedIn, async (req, res) => {
     await transporter.sendMail(mailOptions);
     console.log("메일발송성공");
     res.status(200).json({
+      code: 200,
       success: true,
+      message: "대학교 인증 메일이 발송되었습니다.",
     });
   } catch (err) {
     console.log(err);
-    res.status(500).json({ message: "서버에러" });
+    res.status(500).json({ message: "대학인증서버에러" });
   }
 });
 
