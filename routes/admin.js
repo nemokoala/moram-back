@@ -92,7 +92,7 @@ router.delete("/posting/:id", isLoggedIn, isAdmin, async (req, res) => {
 //3.1 전체 신고 목록 조회하기
 router.get("/report", isLoggedIn, isAdmin, async (req, res) => {
   try {
-    const reportSql = "SELECT id, nickname, description FROM reports ";
+    const reportSql = "SELECT * FROM reports ";
     const [results] = await db.query(reportSql);
     res.status(200).json({ content: results });
   } catch (error) {
