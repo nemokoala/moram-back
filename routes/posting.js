@@ -198,7 +198,7 @@ router.put("/:id", isLoggedIn, async (req, res) => {
     const selectSql = "SELECT userId FROM postings WHERE id = ?";
     const [rows] = await db.query(selectSql, [req.params.id]);
     if (!rows.length) {
-      return res.status(404).json({ message: "게시물을 찾을 수 없습니다." });
+      return res.status(400).json({ message: "게시물을 찾을 수 없습니다." });
     }
     // 게시글의 작성자가 로그인한 사용자가 아니라면 에러를 반환합니다.
     if (rows[0].userId !== loginUserId) {
@@ -237,7 +237,7 @@ router.delete("/:id", isLoggedIn, async (req, res) => {
       "SELECT userId,img1Url,img2Url,img3Url FROM postings WHERE id = ?";
     const [rows] = await db.query(selectSql, [postId]);
     if (!rows.length) {
-      return res.status(404).json({ message: "게시물을 찾을 수 없습니다." });
+      return res.status(400).json({ message: "게시물을 찾을 수 없습니다." });
     }
     // 게시글의 작성자가 로그인한 사용자가 아니라면 에러를 반환합니다.
     if (rows[0].userId !== loginUserId) {
@@ -306,7 +306,7 @@ router.get("/search", async (req, res) => {
     const [results] = await db.query(searchSql, queryParams);
 
     if (results.length === 0) {
-      return res.status(404).json({ message: "검색 결과가 없습니다." });
+      return res.status(400).json({ message: "검색 결과가 없습니다." });
     }
 
     res.json({ content: results });
@@ -335,7 +335,7 @@ router.get("/:id", async (req, res) => {
     const postingSql = "SELECT * FROM postings WHERE id = ?";
     const [results] = await db.query(postingSql, [postId]);
     if (results.length === 0) {
-      return res.status(404).json({ message: "게시물을 찾을 수 없습니다." });
+      return res.status(400).json({ message: "게시물을 찾을 수 없습니다." });
     }
     // 조회수 증가
     const updateHitCountSql =
