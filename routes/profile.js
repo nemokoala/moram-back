@@ -37,8 +37,8 @@ router.use(express.json());
 
 //내가 작성한 글 불러오는 api
 router.get("/", isLoggedIn, async (req, res) => {
-  const userID = req.user[0].id;
   try {
+    const userID = req.user[0].id;
     const postingSql = "SELECT * FROM postings WHERE userId = ?";
     const [postings] = await db.query(postingSql, [userID]);
     const commentSql = "SELECT * FROM comments WHERE userId = ?";
@@ -50,18 +50,28 @@ router.get("/", isLoggedIn, async (req, res) => {
       nickname: req.user[0].nickname,
       img: req.user[0].img,
       univName: req.user[0].univName,
+      message: "전송성공",
     });
   } catch (err) {
     console.log(err);
-
-    res.status(500).json({ message: "서버 에러" });
+    res.status(500).json({ message: "프로필 서버 에러" });
   }
 });
 
-router.post("/changenickname", isLoggedIn, async (req, res) => {
-  const { nickname } = req.body;
-
+router.get("/edit", isLoggedIn, async (req, res) => {
   try {
+    res.status(200).json({
+      img: req.user[0].img,
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "프로필 서버 에러" });
+  }
+});
+
+router.post("/cgnickname", isLoggedIn, async (req, res) => {
+  try {
+    const { nickname } = req.body;
     if (!validateNickname(nickname)) {
       return res.status(400).json({
         code: 400,
@@ -104,7 +114,7 @@ router.post("/changenickname", isLoggedIn, async (req, res) => {
   }
 });
 
-router.post("/changepw", isLoggedIn, async (req, res) => {
+router.post("/cgpw", isLoggedIn, async (req, res) => {
   const { prepw, pw1, pw2 } = req.body;
 
   try {
@@ -144,14 +154,14 @@ router.post("/changepw", isLoggedIn, async (req, res) => {
     });
   } catch (err) {
     console.log(err);
-    console.log("이쪽으로갔나?");
     res.status(500).json({ message: "서버에러" });
   }
 });
 // 프로필 이미지 변경 api
-router.post("/changeimg", async (req, res) => {
+router.post("/changeimg", isLoggedIn, async (req, res) => {
   try {
     const { img } = req.body;
+
     if (!img || imglist.includes(img) === false || img.length > 20) {
       return res.status(400).json({
         code: 400,
@@ -163,6 +173,7 @@ router.post("/changeimg", async (req, res) => {
     const sql = `UPDATE users SET img = ? WHERE email = ?`;
     const [result] = await db.query(sql, [img, req.user[0].email]);
     console.log(result);
+    req.user[0].img = img;
     res.status(200).json({
       code: 200,
       success: true,

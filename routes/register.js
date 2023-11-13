@@ -125,12 +125,17 @@ router.post("/", isNotLoggedIn, async (req, res) => {
 //   }
 // });
 
-router.post("/mailsend", isNotLoggedIn, async (req, res, next) => {
+router.post("/mailsend", async (req, res, next) => {
   console.log("메일 전송");
-  console.log(req.body);
-  console.log(1);
-  const { email } = req.body;
   try {
+    const { email } = req.body;
+
+    if (!validateEmail(email)) {
+      return res
+        .status(403)
+        .json({ message: "유효한 형식의 이메일이 아닙니다." });
+    }
+
     const usersql = "SELECT * FROM users WHERE email = ?";
     const [users] = await db.query(usersql, [email]);
     if (users.length > 0) {
@@ -145,11 +150,6 @@ router.post("/mailsend", isNotLoggedIn, async (req, res, next) => {
     let transporter = smtpTransport;
     //메일 설정
 
-    if (!validateEmail(email)) {
-      return res
-        .status(403)
-        .json({ message: "유효한 형식의 이메일이 아닙니다." });
-    }
     const searchSql = `SELECT * FROM users WHERE email = ?`;
     const [user] = await db.query(searchSql, [email]);
 
