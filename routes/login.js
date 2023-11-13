@@ -13,22 +13,14 @@ const {
   isLoggedIn,
   isNotLoggedIn,
 } = require("../config/middleware");
-
-const { type } = require("os");
+const {
+  validateEmail,
+  validatePassword,
+  validateNickname,
+} = require("../config/validation");
 const { returnUser } = require("../config/middleware");
 router.use(express.urlencoded({ extended: true }));
 router.use(express.json());
-const validateEmail = (email) => {
-  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-  return emailRegex.test(email);
-};
-// password 유효성 검사 함수, 형식에 맞으면 true 리턴 틀리면 false 리턴
-const validatePassword = (password) => {
-  const passwordRegex =
-    /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
-  return passwordRegex.test(password);
-};
-
 // router.get("/", (req, res) => {
 //   res.render("login");
 // });
