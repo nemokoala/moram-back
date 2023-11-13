@@ -14,25 +14,26 @@ const {
   isLoggedIn,
   isNotLoggedIn,
 } = require("../config/middleware");
-const { type } = require("os");
+
+const {
+  validateEmail,
+  validatePassword,
+  validateNickname,
+} = require("../config/validation");
+
+const imglist = [
+  "green",
+  "pink",
+  "yellowgreen",
+  "yellow",
+  "black",
+  "white",
+  "blue",
+  "skyblue",
+  "lightpurple",
+];
 router.use(express.urlencoded({ extended: true }));
 router.use(express.json());
-
-const validateEmail = (email) => {
-  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-  return emailRegex.test(email);
-};
-// password 유효성 검사 함수, 형식에 맞으면 true 리턴 틀리면 false 리턴
-const validatePassword = (password) => {
-  const passwordRegex =
-    /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
-  return passwordRegex.test(password);
-};
-
-const validateNickname = (nickname) => {
-  const regex = /^[a-zA-Z0-9가-힣]{2,16}$/;
-  return regex.test(nickname);
-};
 
 //내가 작성한 글 불러오는 api
 router.get("/", isLoggedIn, async (req, res) => {
@@ -123,6 +124,31 @@ router.post("/changepw", isLoggedIn, async (req, res) => {
     console.log(err);
     console.log("이쪽으로갔나?");
     res.status(500).json({ message: "서버에러" });
+  }
+});
+// 프로필 이미지 변경 api
+router.post("/changeimg", async (req, res) => {
+  try {
+    const { img } = req.body;
+    if (!img || imglist.includes(img) === false || img.length > 20) {
+      return res.status(400).json({
+        code: 400,
+        success: false,
+        message: "유효한 형식의 이미지가 아닙니다.",
+      });
+    }
+
+    const sql = `UPDATE users SET img = ? WHERE email = ?`;
+    const [result] = await db.query(sql, [img, req.user[0].email]);
+    console.log(result);
+    res.status(200).json({
+      code: 200,
+      success: true,
+      message: "프로필 이미지가 변경되었습니다.",
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "프로필 이미지 설정 서버 에러" });
   }
 });
 

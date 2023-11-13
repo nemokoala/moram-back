@@ -204,7 +204,9 @@ router.get("/univActivate/:token", async (req, res) => {
 });
 //실시간 검색
 router.post("/univsearch", async (req, res) => {
-  const univName = req.body.univName;
+  console.log("univ");
+  const { univname } = req.body;
+  console.log(univName);
   console.log(req.body);
   console.log(univName);
   try {
