@@ -67,6 +67,15 @@ router.post("/changenickname", isLoggedIn, async (req, res) => {
         message: "유효한 형식의 닉네임이 아닙니다.",
       });
     }
+    const nicknamesql = "SELECT * FROM users WHERE nickname = ?";
+    const [nicknameResult] = await db.query(nicknamesql, [nickname]);
+    if (nicknameResult.length > 0) {
+      return res.status(400).json({
+        code: 400,
+        success: false,
+        message: "이미 존재하는 닉네임입니다.",
+      });
+    }
     const sql = `UPDATE users SET nickname = ? WHERE email = ?`;
     const [result] = await db.query(sql, [nickname, req.user[0].email]);
     console.log(result);

@@ -35,50 +35,62 @@ router.post("/", isNotLoggedIn, async (req, res) => {
   console.log("회원가입절차시작");
   console.log(email, password);
   console.log("--------------------");
-  if (!req.session.email) {
-    return res.status(400).json({
-      code: 400,
-      success: false,
-      message: "이메일 인증을 해주세요.",
-    });
-  }
-  console.log("1. 이메일 인증완료");
 
-  if (!validateNickname(nickname)) {
-    return res.status(400).json({
-      code: 400,
-      success: false,
-      message: "유효한 형식의 닉네임이 아닙니다.",
-    });
-  }
-
-  if (!validateEmail(email)) {
-    return res.status(400).json({
-      code: 400,
-      success: false,
-      message: "유효한 형식의 이메일이 아닙니다.",
-    });
-  }
-  if (!validatePassword(password)) {
-    return res.status(400).json({
-      code: 400,
-      success: false,
-      message: "비밀번호는 8자 이상, 영문자, 숫자, 특수문자를 포함해야 합니다.",
-    });
-  }
-  console.log("2. 유효성 검사 완료");
-  if (email !== req.session.email) {
-    console.log(`인증정보 불일치`);
-    console.log(email, req.session.email, nickname, req.session.nickname);
-    console.log("-------------");
-    return res.status(400).json({
-      code: 400,
-      success: false,
-      message: "인증정보 불일치",
-    });
-  }
-  console.log("회원가입중");
   try {
+    if (!req.session.email) {
+      return res.status(400).json({
+        code: 400,
+        success: false,
+        message: "이메일 인증을 해주세요.",
+      });
+    }
+    console.log("1. 이메일 인증완료");
+
+    if (!validateNickname(nickname)) {
+      return res.status(400).json({
+        code: 400,
+        success: false,
+        message: "유효한 형식의 닉네임이 아닙니다.",
+      });
+    }
+
+    if (!validateEmail(email)) {
+      return res.status(400).json({
+        code: 400,
+        success: false,
+        message: "유효한 형식의 이메일이 아닙니다.",
+      });
+    }
+    if (!validatePassword(password)) {
+      return res.status(400).json({
+        code: 400,
+        success: false,
+        message:
+          "비밀번호는 8자 이상, 영문자, 숫자, 특수문자를 포함해야 합니다.",
+      });
+    }
+    const nicknamesql = "SELECT * FROM users WHERE nickname = ?";
+    const [nicknameResult] = await db.query(nicknamesql, [nickname]);
+    if (nicknameResult.length > 0) {
+      return res.status(400).json({
+        code: 400,
+        success: false,
+        message: "이미 존재하는 닉네임입니다.",
+      });
+    }
+    console.log("2. 유효성 검사 완료");
+    if (email !== req.session.email) {
+      console.log(`인증정보 불일치`);
+      console.log(email, req.session.email, nickname, req.session.nickname);
+      console.log("-------------");
+      return res.status(400).json({
+        code: 400,
+        success: false,
+        message: "인증정보 불일치",
+      });
+    }
+    console.log("회원가입중");
+
     const sql = `INSERT INTO users (platformType, nickname, email, password) VALUES (?, ?, ?, ?)`;
     hash = await bcrypt.hash(password, 12);
     await db.query(sql, ["local", nickname, email, hash]);
@@ -89,29 +101,29 @@ router.post("/", isNotLoggedIn, async (req, res) => {
   }
 });
 
-router.post("/validatenickname", isNotLoggedIn, async (req, res, next) => {
-  try {
-    const { nickname } = req.body;
-    const sql = "SELECT * FROM users WHERE nickname = ?";
-    const [user] = await db.query(sql, [nickname]);
-    if (user.length > 0) {
-      return res.status(400).json({
-        code: 400,
-        success: false,
-        message: "이미 존재하는 닉네임입니다.",
-      });
-    }
-    req.session.nickname = nickname;
-    res.status(200).json({
-      code: 200,
-      success: true,
-      message: "닉네임 인증 성공",
-    });
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ message: "서버에러" });
-  }
-});
+// router.post("/validatenickname", isNotLoggedIn, async (req, res, next) => {
+//   try {
+//     const { nickname } = req.body;
+//     const sql = "SELECT * FROM users WHERE nickname = ?";
+//     const [user] = await db.query(sql, [nickname]);
+//     if (user.length > 0) {
+//       return res.status(400).json({
+//         code: 400,
+//         success: false,
+//         message: "이미 존재하는 닉네임입니다.",
+//       });
+//     }
+//     req.session.nickname = nickname;
+//     res.status(200).json({
+//       code: 200,
+//       success: true,
+//       message: "닉네임 인증 성공",
+//     });
+//   } catch (err) {
+//     console.log(err);
+//     res.status(500).json({ message: "서버에러" });
+//   }
+// });
 
 router.post("/mailsend", isNotLoggedIn, async (req, res, next) => {
   console.log("메일 전송");
