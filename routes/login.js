@@ -25,6 +25,9 @@ router.use(express.json());
 //   res.render("login");
 // });
 
+const URL = process.env.LOCAL_URL;
+const API_URL = process.env.LOCAL_API_URL;
+
 router.post("/", async (req, res, next) => {
   //? local로 실행이 되면 localstrategy.js를 찾아 실행한다.
   passport.authenticate("local", (authError, user, info) => {
@@ -106,14 +109,14 @@ router.post("/forgotpw", async (req, res) => {
     console.log(user);
     let transporter = smtpTransport;
     let mailOptions = {
-      from: "c1004sos@1gmail.com", //송신할 이메일
+      from: process.env.EMAIL, //송신할 이메일
       to: data.mail, //수신할 이메일
       subject: "[모람모람]아이디/비밀번호 정보입니다.",
       html: ` <div>
       <p>요청한 계정 정보는 아래와 같습니다.</p>
       <hr />
       <ul>
-        <li>사이트 : https://www.moram.com</li>
+        <li>사이트 : <a href="https://www.moram.com">https://www.moram.com</a></li>
         <li>이메일 : ${user[0].email}</li>
         <li>닉네임 : ${user[0].nickname}</li>
         <li>비밀번호 :${newpassword}</li>
@@ -122,10 +125,10 @@ router.post("/forgotpw", async (req, res) => {
       <p>로그인 후 다른 비밀번호로 변경해 주시기 바랍니다.</p>
       <p>링크를 클릭하지 않으면 비밀번호가 변경되지 않습니다.</p>
       <a
-        href="http://localhost:8000/login/reset/${token}"
+        href="${API_URL}/login/reset/${token}"
         rel="noreferrer noopener"
         target="_blank"
-        >http://localhost:8000/login/reset/${token}</a
+        >http://${API_URL}/login/reset/${token}</a
       >
     </div>`,
     };

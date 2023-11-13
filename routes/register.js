@@ -137,6 +137,9 @@ router.post("/mailsend", isNotLoggedIn, async (req, res, next) => {
       return res.status(400).json({ message: "이메일이 이미 존재합니다." });
     }
 
+    const deletesql = "DELETE FROM emailVerification WHERE email = ?";
+    await db.query(deletesql, [email]);
+
     //랜덤 인증 코드 생성
     const authcode = Math.floor(100000 + Math.random() * 900000).toString();
     let transporter = smtpTransport;
@@ -155,7 +158,7 @@ router.post("/mailsend", isNotLoggedIn, async (req, res, next) => {
     }
 
     let mailOptions = {
-      from: "c1004sos@1gmail.com", //송신할 이메일
+      from: process.env.EMAIL, //송신할 이메일
       to: email, //수신할 이메일
       subject: "[모람모람]인증 관련 이메일 입니다",
       text: `오른쪽 숫자 6자리를 입력해주세요 : ${authcode}`,

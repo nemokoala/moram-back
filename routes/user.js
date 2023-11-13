@@ -28,7 +28,8 @@ const categorylist = [
   "오류 신고",
   "기타",
 ];
-
+const URL = process.env.LOCAL_URL;
+const API_URL = process.env.LOCAL_API_URL;
 // const validateUserId = (userid) => {
 //   const useridRegex = /^[a-zA-Z0-9]{4,10}$/;
 //   return useridRegex.test(userid);
@@ -149,10 +150,10 @@ router.post("/certuniv", isLoggedIn, async (req, res) => {
       <hr />
       <span>아래 링크를 클릭하면 학교 이메일 인증이 완료됩니다.</span>
       <a
-        href="http://localhost:8000/user/univActivate/${token}"
+        href="${API_URL}/user/univActivate/${token}"
         rel="noreferrer noopener"
         target="_blank"
-        >http://localhost:8000/user/univActivate/${token}</a
+        >${API_URL}/univActivate/${token}</a
       >
     </div>`,
     };
@@ -175,11 +176,7 @@ router.get("/univActivate/:token", async (req, res) => {
     const sql = `SELECT * FROM univVerification WHERE token = ? AND expiresAt > NOW()`;
     const [result] = await db.query(sql, [token]);
     if (result.length === 0) {
-      res.status(400).json({
-        code: 400,
-        success: false,
-        message: "만료된 토큰입니다.",
-      });
+      res.status(400).send("만료된 토큰입니다. 재인증 해주세요.");
     }
     const univName = result[0].univName;
     const email = result[0].verifiedEmail;
@@ -192,11 +189,7 @@ router.get("/univActivate/:token", async (req, res) => {
     console.log(updateResult);
     const deleteSql = `DELETE FROM univVerification WHERE token = ?`;
     await db.query(deleteSql, [token]);
-    res.status(200).json({
-      code: 200,
-      success: true,
-      message: "대학교 인증이 완료되었습니다.",
-    });
+    res.status(200).send("대학교 인증이 완료되었습니다.");
   } catch (err) {
     console.log(err);
     res.status(500).json({ message: "서버에러" });
@@ -273,15 +266,12 @@ router.get("/check", (req, res) => {
 });
 
 router.get("/test", async (req, res) => {
-  const certifyResponse = await axios.post(
-    "http://localhost:8000/user/certify",
-    {
-      key: `${process.env.UNIVCERT_KEY}`,
-      email: "c1004sos@wku.ac.kr",
-      univName: "원광대학교",
-      univ_check: true,
-    }
-  );
+  const certifyResponse = await axios.post(`${URL}/user/certify`, {
+    key: `${process.env.UNIVCERT_KEY}`,
+    email: "c1004sos@wku.ac.kr",
+    univName: "원광대학교",
+    univ_check: true,
+  });
 });
 
 router.get("/kakao", isNotLoggedIn, passport.authenticate("kakao"));
@@ -295,9 +285,7 @@ router.get("/kakao/callback", (req, res, next) => {
     if (!user) {
       console.log(info);
       console.log("123");
-      return res.redirect(
-        "http://localhost:3000/login-fail" + JSON.stringify(info)
-      );
+      return res.redirect(`${URL}/login-fail` + JSON.stringify(info));
     }
 
     // 회원가입된 상태일 경우, 로그인 세션을 생성한다.
@@ -306,9 +294,14 @@ router.get("/kakao/callback", (req, res, next) => {
       if (error) {
         next(error);
       }
+      console.log("로그인 성공");
+      console.log("user: ");
+      console.log(user);
+      console.log(req.user[0].email);
       res.redirect(
+        //http://localhost:3000/login-success?user=
         //https://www.moram2.com/login-success?user=
-        "http:/localhost:3000/login-success?user=" +
+        `${URL}/login-success?user=` +
           JSON.stringify({
             email: req.user[0].email,
             nickname: req.user[0].nickname,
@@ -318,7 +311,7 @@ router.get("/kakao/callback", (req, res, next) => {
   })(req, res, next); // 미들웨어 내의 미들웨어에는 호출 별도로 진행
 });
 
-router.delete("/user", isLoggedIn, async (req, res) => {
+router.delete("/", isLoggedIn, async (req, res) => {
   const email = req.user[0].email;
 
   try {
@@ -326,6 +319,15 @@ router.delete("/user", isLoggedIn, async (req, res) => {
     const sql = `DELETE FROM users WHERE email = ?`;
     const [result] = await db.query(sql, [email]);
     console.log(result);
+
+    req.logout((err) => {
+      if (err) {
+        return next(err);
+      } else {
+        console.log("로그아웃 성공");
+      }
+    });
+
     res.status(200).json({
       code: 200,
       success: true,
