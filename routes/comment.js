@@ -65,20 +65,6 @@ router.post("/:postId", isLoggedIn, async (req, res) => {
       }
 
       const postUserId = postResults[0].userId;
-      // 만약 게시물 작성자가 댓글을 작성한 사용자와 같지 않다면 알림을 생성
-      if (postUserId !== req.session.passport.user[0].id) {
-        const commentNotification = {
-          notifyType: 0, // 대상 타입은 0으로 설정 (게시물)
-          targetId: postId, // 게시물 ID
-          targetUserId: postUserId, // 게시물 작성자의 ID
-          postId: postId, // 댓글의 게시물 ID
-          notifyTime: new Date(), // 알림 생성 시간
-          readType: 0, // 알림 읽음 여부 (0: 읽지 않음, 1: 읽음)
-        };
-
-        await db.query(insertNotificationSql, commentNotification);
-      }
-
       // 대댓글 작성시 부모 댓글 작성자에게 알림 전송
       if (parentId) {
         const parentCommentSql =
@@ -107,6 +93,17 @@ router.post("/:postId", isLoggedIn, async (req, res) => {
             );
           }
         }
+      } else if (postUserId !== req.session.passport.user[0].id) {
+        const commentNotification = {
+          notifyType: 0, // 대상 타입은 0으로 설정 (게시물)
+          targetId: postId, // 게시물 ID
+          targetUserId: postUserId, // 게시물 작성자의 ID
+          postId: postId, // 댓글의 게시물 ID
+          notifyTime: new Date(), // 알림 생성 시간
+          readType: 0, // 알림 읽음 여부 (0: 읽지 않음, 1: 읽음)
+        };
+
+        await db.query(insertNotificationSql, commentNotification);
       }
     }
 
@@ -118,6 +115,7 @@ router.post("/:postId", isLoggedIn, async (req, res) => {
     res.status(500).json({ message: "댓글 추가 서버에러" });
   }
 });
+
 
 // 댓글추가 : http://localhost:8000/comment/123
 //대댓글 추가 : http://localhost:8000/comment/123?parentId=456
