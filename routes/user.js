@@ -161,7 +161,7 @@ router.post("/certuniv", isLoggedIn, async (req, res) => {
     res.status(200).json({
       code: 200,
       success: true,
-      message: "대학교 인증 메일이 발송되었습니다.",
+      message: "대학교 인증 메일이 발송되었습니다. 링크를 클릭해주세요.",
     });
   } catch (err) {
     console.log(err);
@@ -205,7 +205,11 @@ router.get("/univActivate/:token", async (req, res) => {
 //실시간 검색
 router.post("/univsearch", async (req, res) => {
   console.log("univ");
-  const { univname } = req.body;
+  const { univName } = req.body;
+
+  if (!univName)
+    return res.status(400).json({ message: "대학교 이름을 입력해주세요." });
+
   console.log(univName);
   console.log(req.body);
   console.log(univName);

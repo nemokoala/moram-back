@@ -48,6 +48,8 @@ router.get("/", isLoggedIn, async (req, res) => {
       comment: comments,
       email: req.user[0].email,
       nickname: req.user[0].nickname,
+      img: req.user[0].img,
+      univName: req.user[0].univName,
     });
   } catch (err) {
     console.log(err);
