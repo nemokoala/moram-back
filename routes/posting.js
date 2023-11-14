@@ -14,7 +14,7 @@ const { getUploadUrls, deleteImageFromS3 } = require("../config/aws");
 router.get("/", async (req, res) => {
   try {
     let { category, tag, lastId, search } = req.query;
-    let titleSql = "SELECT * FROM postings";
+    let titleSql = "SELECT postings.*, users.img AS profileImg FROM postings";
     let endIdSql = "SELECT id FROM postings";
     let queryParams = [];
     let conditions = [];
@@ -43,16 +43,17 @@ router.get("/", async (req, res) => {
       }
 
       if (lastId) {
-        conditions.push("id < ?");
+        conditions.push("postings.id < ?");
         queryParams.push(Number(lastId));
       }
 
+      titleSql += " LEFT JOIN users on postings.userId = users.id";
       titleSql += " WHERE " + conditions.join(" AND ");
       endIdSql += " WHERE " + conditions.join(" AND ");
     }
 
     // 작성 시간을 기준으로 내림차순 정렬
-    titleSql += " ORDER BY id DESC";
+    titleSql += " ORDER BY postings.id DESC";
 
     // 최근에 써진 글 10개만 가져오기
     titleSql += " LIMIT 10";
@@ -78,7 +79,7 @@ router.get("/popular", async (req, res) => {
   try {
     // 좋아요 수가 가장 많은 상위 3개 게시글을 선택하는 SQL 쿼리
     const popularSql =
-      "SELECT * FROM postings ORDER BY likesCount DESC LIMIT 3";
+      "SELECT *, users.img AS profileImg FROM postings LEFT JOIN users on postings.userId = users.id ORDER BY likesCount DESC LIMIT 3";
 
     // SQL 쿼리 실행
     const [results] = await db.query(popularSql);
@@ -337,7 +338,9 @@ router.get("/imgurl", isLoggedIn, getUploadUrls, async (req, res) => {
 router.get("/:id", async (req, res) => {
   const postId = Number(req.params.id);
   try {
-    const postingSql = "SELECT * FROM postings WHERE id = ?";
+    const postingSql =
+      "SELECT postings.*, users.img AS profileImg FROM postings \
+      LEFT JOIN users on postings.userId = users.id WHERE postings.id = ?";
     const [results] = await db.query(postingSql, [postId]);
     if (results.length === 0) {
       return res.status(400).json({ message: "게시물을 찾을 수 없습니다." });

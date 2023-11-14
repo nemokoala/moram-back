@@ -31,7 +31,6 @@ router.get("/:postId", async (req, res) => {
   }
 });
 
-
 // 댓글 추가하기
 router.post("/:postId", isLoggedIn, async (req, res) => {
   try {
@@ -119,7 +118,6 @@ router.post("/:postId", isLoggedIn, async (req, res) => {
     res.status(500).json({ message: "댓글 추가 서버에러" });
   }
 });
-
 
 // 댓글추가 : http://localhost:8000/comment/123
 //대댓글 추가 : http://localhost:8000/comment/123?parentId=456
