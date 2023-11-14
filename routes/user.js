@@ -220,9 +220,9 @@ router.post("/univsearch", async (req, res) => {
   }
 });
 
-router.post("/univdelete", async (req, res) => {
-  const { email } = req.body;
+router.delete("/univ", isLoggedIn, async (req, res) => {
   try {
+    const email = req.user[0].email;
     const sql = `UPDATE users SET verified = ?, univName = ? WHERE email = ?`;
     const [result] = await db.query(sql, [0, null, email]);
     console.log(result);
@@ -341,7 +341,22 @@ router.delete("/", isLoggedIn, async (req, res) => {
 
 router.post("/ask", async (req, res) => {
   try {
+    console.log("post ask");
+    console.log(req.body);
     const { email, category, title, content } = req.body;
+
+    if (
+      typeof title !== "string" ||
+      typeof content !== "string" ||
+      typeof email !== "string" ||
+      typeof category !== "string"
+    ) {
+      res.status(400).json({
+        code: 400,
+        success: false,
+        message: "유효한 형식의 데이터가 아닙니다.",
+      });
+    }
 
     if (
       email.length === 0 ||
@@ -355,6 +370,15 @@ router.post("/ask", async (req, res) => {
         message: "모든 항목을 입력해주세요.",
       });
     }
+
+    if (!validateEmail(email)) {
+      return res.status(400).json({
+        code: 400,
+        success: false,
+        message: "유효한 형식의 이메일이 아닙니다.",
+      });
+    }
+
     //오버플로우 방지
     if (title.length > 100) {
       res.status(400).json({
@@ -371,16 +395,8 @@ router.post("/ask", async (req, res) => {
         message: "내용은 1000자 이내로 입력해주세요.",
       });
     }
-    //이메일 유효성 검사
-    if (!validateEmail(email)) {
-      res.status(400).json({
-        code: 400,
-        success: false,
-        message: "유효한 형식의 이메일이 아닙니다.",
-      });
-    }
-    //카테고리 유효성 검사
 
+    //카테고리 유효성 검사
     if (!categorylist.includes(category)) {
       res.status(400).json({
         code: 400,
@@ -389,6 +405,12 @@ router.post("/ask", async (req, res) => {
       });
     }
     console.log("유효성 검사 완료");
+    res.status(200).json({ message: "메일발송성공" });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "게시글작성서버에러" });
+  }
+  try {
     let transporter = smtpTransport;
     let mailOptions = {
       from: `${process.env.EMAIL}`, //송신할 이메일
@@ -407,11 +429,9 @@ router.post("/ask", async (req, res) => {
     console.log(mailOptions);
     await transporter.sendMail(mailOptions);
     console.log("메일 발송 성공");
-
-    res.status(200).json({ message: "메일발송성공" });
   } catch (err) {
     console.log(err);
-    res.status(500).json({ message: "게시글작성서버에러" });
+    res.status(500).json({ message: "이메일전송서버에러" });
   }
 });
 
