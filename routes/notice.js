@@ -4,69 +4,6 @@ const db = require("../config/db");
 const passport = require("../config/passport");
 const { isnotloggedin, isLoggedIn, isAdmin } = require("../config/middleware");
 
-//공지기능
-//1.1 유저 : 전체 공지 조회 hide = null인 값만 출력
-// router.get("/user", isLoggedIn, async (req, res) => {
-//   try {
-//     const allSql =
-//       "SELECT id, title, writeTime, updateTime FROM notices WHERE hide IS NULL";
-//     const [results] = await db.query(allSql);
-//     return res.status(200).json({ content: results });
-//   } catch (error) {
-//     res.status(500).json({ message: "db에러" });
-//     console.error(error);
-//   }
-// });
-
-// //1.2 유저 : 특정 공지 조회 - hide = null이면서 id 파라미터가 일치하는 데이터
-// router.get("/user/:id", isLoggedIn, async (req, res) => {
-//   const noticesId = Number(req.params.id);
-//   try {
-//     const getSql = "SELECT * FROM notices WHERE hide IS NULL AND id = ?";
-//     const [results] = await db.query(getSql, [noticesId]);
-//     if (results.length === 0) {
-//       return res
-//         .status(404)
-//         .json({ message: "해당 공지를 찾을 수 없습니다. " });
-//     }
-//     res.status(200).json({ content: results });
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ message: "서버 에러" });
-//   }
-// });
-
-// //2.1 관리자: 전체 공지 조회
-// router.get("/admin", isLoggedIn, isAdmin, async (req, res) => {
-//   try {
-//     const allSql =
-//       "SELECT id, title, writeTime, updateTime, nickname, hide FROM notices";
-//     const [results] = await db.query(allSql);
-//     res.status(200).json({ content: results });
-//   } catch (error) {
-//     res.status(500).json({ message: "db에러" });
-//     console.error(error);
-//   }
-// });
-
-// //2.2 관리자: 특정 공지 조회
-// router.get("/admin/:id", isLoggedIn, isAdmin, async (req, res) => {
-//   const noticesId = Number(req.params.id);
-//   try {
-//     const getSql = "SELECT * FROM notices  WHERE id = ?";
-//     const [results] = await db.query(getSql, [noticesId]);
-//     if (results.length === 0) {
-//       return res
-//         .status(404)
-//         .json({ message: "해당 공지를 찾을 수 없습니다. " });
-//     }
-//     res.status(200).json({ content: results });
-//   } catch (error) {
-//     console.error(error);
-//     res.status(500).json({ message: "서버 에러" });
-//   }
-// });
-
 //1. 공지 전체 조회하기
 router.get("/", async (req, res) => {
   try {
@@ -87,7 +24,7 @@ router.get("/:id", async (req, res) => {
     const [results] = await db.query(allSql, notId);
     if (results.length === 0) {
       return res
-        .status(404)
+        .status(400)
         .json({ message: "해당 공지를 찾을 수 없습니다. " });
     }
     res.json({ content: results[0] });
@@ -135,7 +72,7 @@ router.delete("/:id", isLoggedIn, isAdmin, async (req, res) => {
 
     if (results.length === 0) {
       res
-        .status(404)
+        .status(400)
         .json({ message: "해당하는 공지글이 더 이상 존재하지 않습니다." });
       return;
     }
@@ -161,7 +98,7 @@ router.put("/:id", isLoggedIn, isAdmin, async (req, res) => {
     //해당 글이 존재하는지
     if (selected.length === 0) {
       res
-        .status(404)
+        .status(400)
         .json({ message: "해당하는 공지글이 더 이상 존재하지 않습니다. " });
       return;
     }

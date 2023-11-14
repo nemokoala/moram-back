@@ -61,7 +61,7 @@ router.post("/:postId", isLoggedIn, async (req, res) => {
       const [postResults] = await db.query(postSql, [postId]);
 
       if (postResults.length === 0) {
-        return res.status(404).json({ message: "게시물을 찾을 수 없습니다." });
+        return res.status(400).json({ message: "게시물을 찾을 수 없습니다." });
       }
 
       const postUserId = postResults[0].userId;
@@ -134,7 +134,7 @@ router.delete("/:id", isLoggedIn, async (req, res) => {
     //삭제하려는 댓글 레코드
     if (comments.length === 0) {
       res
-        .status(404)
+        .status(400)
         .json({ message: "해당하는 댓글이 더 이상 존재하지 않습니다." });
       return;
     }
@@ -154,7 +154,7 @@ router.delete("/:id", isLoggedIn, async (req, res) => {
       res.status(200).json({ message: "댓글이 삭제되었습니다." });
     } else {
       res
-        .status(403)
+        .status(400)
         .json({ message: "댓글을 삭제할 권한이 존재하지 않습니다." });
     }
   } catch (error) {

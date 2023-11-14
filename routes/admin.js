@@ -29,7 +29,7 @@ router.delete("/user/:id", isLoggedIn, isAdmin, async (req, res) => {
     const [users] = await db.query(userSql, userId);
     if (users.length === 0) {
       return res
-        .status(404)
+        .status(400)
         .json({ message: "해당하는 유저가 존재하지 않습니다. " });
     }
 
@@ -64,7 +64,7 @@ router.delete("/posting/:id", isLoggedIn, isAdmin, async (req, res) => {
     const [posts] = await db.query(postSql, postId);
     if (posts.length === 0) {
       res
-        .status(404)
+        .status(400)
         .json({ message: " 해당하는 게시글이 존재하지 않습니다. " });
       return;
     }
@@ -110,7 +110,7 @@ router.get("/report/:id", isLoggedIn, isAdmin, async (req, res) => {
 
     if (results.length === 0) {
       return res
-        .status(404)
+        .status(400)
         .json({ message: "해당하는 게시물을 신고글을 찾을 수 없습니다. " });
     }
     res.status(200).json({ content: results });
@@ -142,7 +142,7 @@ router.delete("/comment/:id", isLoggedIn, isAdmin, async (req, res) => {
 
     if (comments.length === 0) {
       return res
-        .status(404)
+        .status(400)
         .json({ message: "해당하는 댓글이 존재하지 않습니다." });
     }
 
