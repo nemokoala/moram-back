@@ -54,8 +54,8 @@ router.get("/", async (req, res) => {
     // 작성 시간을 기준으로 내림차순 정렬
     titleSql += " ORDER BY id DESC";
 
-    // 최근에 써진 글 7개만 가져오기
-    titleSql += " LIMIT 7";
+    // 최근에 써진 글 10개만 가져오기
+    titleSql += " LIMIT 10";
     endIdSql += " ORDER BY id ASC LIMIT 1";
     console.log("db sql", titleSql);
     const [results] = await db.query(titleSql, queryParams);
@@ -269,9 +269,14 @@ router.post("/report/:postId", isLoggedIn, async (req, res) => {
   try {
     const { nickname } = req.session.passport.user[0];
     const userId = Number(req.session.passport.user[0].id); // 로그인한 사용자의 ID
-    const { postId } = Number(req.params); // 신고할 게시물의 ID
-    const { reason, description } = req.body; // 신고 이유와 상세 설명
+    const postId = Number(req.params.postId); // 신고할 게시물의 ID
+    const { reason } = req.body; // 신고 이유와 상세 설명
     const createTime = new Date(); // 신고 시간
+
+    if (!reason || reason?.length < 5)
+      return res
+        .status(400)
+        .json({ message: "신고 내용을 5글자 이상 입력해주세요." });
 
     // 신고 정보를 데이터베이스에 저장하는 SQL 쿼리
     const reportSql =

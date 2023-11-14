@@ -61,13 +61,14 @@ router.post("/", isLoggedIn, async (req, res) => {
         "UPDATE users SET gptCount = gptCount - 1 WHERE id = ?",
         [userId]
       );
-      res.status(200).send(result);
+      res.status(200).json({ content: result });
     } catch (error) {
       console.error(error);
-      return res.status(500).send("db 오류 발생.");
+      return res.status(500).json({ message: "db 오류 발생." });
     }
   } catch (error) {
     console.error("Error fetching response:", error);
+    return res.status(500).json({ message: error });
   }
 });
 
