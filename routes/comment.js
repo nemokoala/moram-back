@@ -152,7 +152,7 @@ router.delete("/:id", isLoggedIn, async (req, res) => {
       res.status(200).json({ message: "댓글이 삭제되었습니다." });
     } else {
       res
-        .status(403)
+        .status(400)
         .json({ message: "댓글을 삭제할 권한이 존재하지 않습니다." });
     }
   } catch (error) {
