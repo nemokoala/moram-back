@@ -17,7 +17,12 @@ router.use(bodyParser.urlencoded({ extended: false }));
 router.get("/:postId", async (req, res) => {
   const postId = req.params.postId;
   try {
-    const allSql = "SELECT * FROM comments WHERE postId = ?";
+    const allSql = `
+      SELECT comments.*, users.nickname 
+      FROM comments
+      JOIN users ON comments.userId = users.id
+      WHERE comments.postId = ?
+    `;
     const [results] = await db.query(allSql, [postId]);
     res.status(200).json({ content: results });
   } catch (error) {
@@ -25,6 +30,7 @@ router.get("/:postId", async (req, res) => {
     console.error(error);
   }
 });
+
 
 // 댓글 추가하기
 router.post("/:postId", isLoggedIn, async (req, res) => {
@@ -34,7 +40,6 @@ router.post("/:postId", isLoggedIn, async (req, res) => {
     const postId = Number(req.params.postId); //해당 댓글의 포스팅 id
     const parentId = Number(req.query.parentId) || null; //대댓글 시 부모 댓글 id
     const userId = Number(req.session.passport.user[0].id);
-    const userNickname = req.session.passport.user[0].nickname;
 
     // 댓글 수 삽입
     const addCountSql =
@@ -43,11 +48,10 @@ router.post("/:postId", isLoggedIn, async (req, res) => {
 
     //댓글 추가
     const addSql =
-      "INSERT INTO comments (userId, postId, nickname, content, writeTime, parentId) VALUES (?, ?, ?, ?, ?, ?)";
+      "INSERT INTO comments (userId, postId, content, writeTime, parentId) VALUES (?, ?, ?, ?, ?)";
     const result = await db.query(addSql, [
       userId,
       postId,
-      userNickname,
       content,
       writeTime,
       parentId,
