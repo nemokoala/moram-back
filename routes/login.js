@@ -13,27 +13,22 @@ const {
   isLoggedIn,
   isNotLoggedIn,
 } = require("../config/middleware");
-
-const { type } = require("os");
+const {
+  validateEmail,
+  validatePassword,
+  validateNickname,
+} = require("../config/validation");
 const { returnUser } = require("../config/middleware");
 router.use(express.urlencoded({ extended: true }));
 router.use(express.json());
-const validateEmail = (email) => {
-  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-  return emailRegex.test(email);
-};
-// password 유효성 검사 함수, 형식에 맞으면 true 리턴 틀리면 false 리턴
-const validatePassword = (password) => {
-  const passwordRegex =
-    /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/;
-  return passwordRegex.test(password);
-};
-
 // router.get("/", (req, res) => {
 //   res.render("login");
 // });
 
-router.post("/", async (req, res, next) => {
+const URL = process.env.LOCAL_URL;
+const API_URL = process.env.LOCAL_API_URL;
+
+router.post("/", isNotLoggedIn, async (req, res, next) => {
   //? local로 실행이 되면 localstrategy.js를 찾아 실행한다.
   passport.authenticate("local", (authError, user, info) => {
     //? (authError, user, info) => 이 콜백 미들웨어는 localstrategy에서 done()이 호출되면 실행된다.
@@ -82,13 +77,18 @@ router.post("/", async (req, res, next) => {
 //   res.json("forgot");
 // });
 
-router.post("/forgotpw", async (req, res) => {
-  const { email } = req.body;
-  if (email === "") {
-    res.status(400).json({ message: "이메일을 입력해주세요." });
-  }
-
+//비밀번호 찾기 API
+router.post("/forgotpw", isNotLoggedIn, async (req, res) => {
   try {
+    const { email } = req.body;
+
+    //이메일 유효성 검사
+    if (!validateEmail(email)) {
+      return res
+        .status(400)
+        .json({ message: "이메일 형식이 올바르지 않습니다." });
+    }
+
     const sql = `SELECT * FROM users WHERE email = ?`;
     const result = await db.query(sql, email);
     const user = result[0];
@@ -98,30 +98,21 @@ router.post("/forgotpw", async (req, res) => {
     const newpassword = await generatePassword();
     const hashedPassword = await bcrypt.hash(newpassword, 12);
     const token = crypto.randomBytes(20).toString("hex");
-    const data = {
-      token,
-      mail: user[0].email,
-      ttl: new Date(Date.now() + 5 * 60 * 1000),
-    };
-    console.log(data);
+    const ttl = new Date(Date.now() + 5 * 60 * 1000);
+    const mail = user[0].email;
     const insertSql = `INSERT INTO pwdVerification (token, email, pwd, expiresAt) VALUES (?, ?, ?, ?)`;
-    await db.query(insertSql, [
-      data.token,
-      data.mail,
-      hashedPassword,
-      data.ttl,
-    ]);
+    await db.query(insertSql, [token, mail, hashedPassword, ttl]);
     console.log(user);
     let transporter = smtpTransport;
     let mailOptions = {
-      from: "c1004sos@1gmail.com", //송신할 이메일
-      to: data.mail, //수신할 이메일
+      from: process.env.EMAIL, //송신할 이메일
+      to: mail, //수신할 이메일
       subject: "[모람모람]아이디/비밀번호 정보입니다.",
       html: ` <div>
       <p>요청한 계정 정보는 아래와 같습니다.</p>
       <hr />
       <ul>
-        <li>사이트 : https://www.moram.com</li>
+        <li>사이트 : <a href="https://www.moram.com">https://www.moram.com</a></li>
         <li>이메일 : ${user[0].email}</li>
         <li>닉네임 : ${user[0].nickname}</li>
         <li>비밀번호 :${newpassword}</li>
@@ -130,10 +121,10 @@ router.post("/forgotpw", async (req, res) => {
       <p>로그인 후 다른 비밀번호로 변경해 주시기 바랍니다.</p>
       <p>링크를 클릭하지 않으면 비밀번호가 변경되지 않습니다.</p>
       <a
-        href="http://localhost:8000/login/reset/${token}"
+        href="${API_URL}/login/reset/${token}"
         rel="noreferrer noopener"
         target="_blank"
-        >http://localhost:8000/login/reset/${token}</a
+        >http://${API_URL}/login/reset/${token}</a
       >
     </div>`,
     };
@@ -141,7 +132,6 @@ router.post("/forgotpw", async (req, res) => {
     await transporter.sendMail(mailOptions);
     console.log("메일 발송 성공");
 
-    console.log(data);
     res.status(200).json({ message: "메일발송성공" });
   } catch (err) {
     console.log(err);
@@ -175,10 +165,10 @@ router.get("/reset/:token", async (req, res) => {
     console.log(updateResult);
     const deleteSql = `DELETE FROM pwdVerification WHERE token = ?`;
     await db.query(deleteSql, [token]);
-    res.status(200).json({ message: "비밀번호 변경 성공" });
+    res.status(200).send("비밀번호가 변경되었습니다.");
   } catch (err) {
     console.log(err);
-    res.status(500).json({ message: "서버에러" });
+    res.status(500).json({ message: "인증만료" });
   }
 });
 

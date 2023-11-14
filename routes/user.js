@@ -28,7 +28,8 @@ const categorylist = [
   "오류 신고",
   "기타",
 ];
-
+const URL = process.env.LOCAL_URL;
+const API_URL = process.env.LOCAL_API_URL;
 // const validateUserId = (userid) => {
 //   const useridRegex = /^[a-zA-Z0-9]{4,10}$/;
 //   return useridRegex.test(userid);
@@ -66,7 +67,8 @@ router.post("/certuniv", isLoggedIn, async (req, res) => {
   console.log(`req.body: ${JSON.stringify(req.body)}`);
   const verifiedEmail = req.user[0].email;
   console.log(`verifiedEmail: ${verifiedEmail}`);
-
+  let emailDomain;
+  console.log("certuniv api 실행");
   try {
     // 대학교 이름이 들어왔는지 확인
     if (!univName) {
@@ -111,9 +113,7 @@ router.post("/certuniv", isLoggedIn, async (req, res) => {
       });
     }
     // 대학교 이메일 형식과 일치하는지 확인
-    const emailDomain = receivedEmail.substring(
-      receivedEmail.lastIndexOf("@") + 1
-    );
+    emailDomain = receivedEmail.substring(receivedEmail.lastIndexOf("@") + 1);
     if (emailDomain !== result[0].email) {
       return res.status(400).json({
         code: 400,
@@ -135,16 +135,11 @@ router.post("/certuniv", isLoggedIn, async (req, res) => {
       token,
       expiresAt,
     ]);
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ message: "서버에러" });
-  }
 
-  // 대학교 인증 메일 발송
-  console.log(emailDomain);
+    // 대학교 인증 메일 발송
+    console.log(emailDomain);
 
-  console.log(token);
-  try {
+    console.log(token);
     let transporter = smtpTransport;
     let mailOptions = {
       from: "c1004sos@1gmail.com", //송신할 이메일
@@ -155,21 +150,23 @@ router.post("/certuniv", isLoggedIn, async (req, res) => {
       <hr />
       <span>아래 링크를 클릭하면 학교 이메일 인증이 완료됩니다.</span>
       <a
-        href="http://localhost:8000/user/univActivate/${token}"
+        href="${API_URL}/user/univActivate/${token}"
         rel="noreferrer noopener"
         target="_blank"
-        >http://localhost:8000/user/univActivate/${token}</a
+        >${API_URL}/univActivate/${token}</a
       >
     </div>`,
     };
     await transporter.sendMail(mailOptions);
     console.log("메일발송성공");
     res.status(200).json({
+      code: 200,
       success: true,
+      message: "대학교 인증 메일이 발송되었습니다. 링크를 클릭해주세요.",
     });
   } catch (err) {
     console.log(err);
-    res.status(500).json({ message: "서버에러" });
+    res.status(500).json({ message: "대학인증서버에러" });
   }
 });
 
@@ -179,11 +176,7 @@ router.get("/univActivate/:token", async (req, res) => {
     const sql = `SELECT * FROM univVerification WHERE token = ? AND expiresAt > NOW()`;
     const [result] = await db.query(sql, [token]);
     if (result.length === 0) {
-      res.status(400).json({
-        code: 400,
-        success: false,
-        message: "만료된 토큰입니다.",
-      });
+      res.status(400).send("만료된 토큰입니다. 재인증 해주세요.");
     }
     const univName = result[0].univName;
     const email = result[0].verifiedEmail;
@@ -196,11 +189,7 @@ router.get("/univActivate/:token", async (req, res) => {
     console.log(updateResult);
     const deleteSql = `DELETE FROM univVerification WHERE token = ?`;
     await db.query(deleteSql, [token]);
-    res.status(200).json({
-      code: 200,
-      success: true,
-      message: "대학교 인증이 완료되었습니다.",
-    });
+    res.status(200).send("대학교 인증이 완료되었습니다.");
   } catch (err) {
     console.log(err);
     res.status(500).json({ message: "서버에러" });
@@ -208,23 +197,32 @@ router.get("/univActivate/:token", async (req, res) => {
 });
 //실시간 검색
 router.post("/univsearch", async (req, res) => {
-  const univName = req.body.univName;
+  console.log("univ");
+  const { univName } = req.body;
+
+  if (!univName)
+    return res.status(400).json({ message: "대학교 이름을 입력해주세요." });
+
+  console.log(univName);
   console.log(req.body);
   console.log(univName);
   try {
     //univName이 들어가는 모든 대학 검색
-    const sql = "SELECT * FROM univList WHERE univName LIKE ?";
+    const sql = "SELECT univName FROM univList WHERE univName LIKE ?";
     const [result] = await db.query(sql, ["%" + univName + "%"]);
-    res.status(200).json(result);
-    console.log(result);
+    const modifiedData = result.map((item) => {
+      return Object.values(item)[0];
+    });
+    console.log(modifiedData);
+    res.status(200).send(modifiedData);
   } catch (err) {
     res.status(500).json({ message: "대학검색서버에러" });
   }
 });
 
-router.post("/univdelete", async (req, res) => {
-  const { email } = req.body;
+router.delete("/univ", isLoggedIn, async (req, res) => {
   try {
+    const email = req.user[0].email;
     const sql = `UPDATE users SET verified = ?, univName = ? WHERE email = ?`;
     const [result] = await db.query(sql, [0, null, email]);
     console.log(result);
@@ -268,15 +266,12 @@ router.get("/check", (req, res) => {
 });
 
 router.get("/test", async (req, res) => {
-  const certifyResponse = await axios.post(
-    "http://localhost:8000/user/certify",
-    {
-      key: `${process.env.UNIVCERT_KEY}`,
-      email: "c1004sos@wku.ac.kr",
-      univName: "원광대학교",
-      univ_check: true,
-    }
-  );
+  const certifyResponse = await axios.post(`${URL}/user/certify`, {
+    key: `${process.env.UNIVCERT_KEY}`,
+    email: "c1004sos@wku.ac.kr",
+    univName: "원광대학교",
+    univ_check: true,
+  });
 });
 
 router.get("/kakao", isNotLoggedIn, passport.authenticate("kakao"));
@@ -290,9 +285,7 @@ router.get("/kakao/callback", (req, res, next) => {
     if (!user) {
       console.log(info);
       console.log("123");
-      return res.redirect(
-        "http://localhost:3000/login-fail" + JSON.stringify(info)
-      );
+      return res.redirect(`${URL}/login-fail` + JSON.stringify(info));
     }
 
     // 회원가입된 상태일 경우, 로그인 세션을 생성한다.
@@ -301,9 +294,14 @@ router.get("/kakao/callback", (req, res, next) => {
       if (error) {
         next(error);
       }
+      console.log("로그인 성공");
+      console.log("user: ");
+      console.log(user);
+      console.log(req.user[0].email);
       res.redirect(
+        //http://localhost:3000/login-success?user=
         //https://www.moram2.com/login-success?user=
-        "http:/localhost:3000/login-success?user=" +
+        `${URL}/login-success?user=` +
           JSON.stringify({
             email: req.user[0].email,
             nickname: req.user[0].nickname,
@@ -313,7 +311,7 @@ router.get("/kakao/callback", (req, res, next) => {
   })(req, res, next); // 미들웨어 내의 미들웨어에는 호출 별도로 진행
 });
 
-router.delete("/user", isLoggedIn, async (req, res) => {
+router.delete("/", isLoggedIn, async (req, res) => {
   const email = req.user[0].email;
 
   try {
@@ -321,6 +319,15 @@ router.delete("/user", isLoggedIn, async (req, res) => {
     const sql = `DELETE FROM users WHERE email = ?`;
     const [result] = await db.query(sql, [email]);
     console.log(result);
+
+    req.logout((err) => {
+      if (err) {
+        return next(err);
+      } else {
+        console.log("로그아웃 성공");
+      }
+    });
+
     res.status(200).json({
       code: 200,
       success: true,
@@ -334,7 +341,22 @@ router.delete("/user", isLoggedIn, async (req, res) => {
 
 router.post("/ask", async (req, res) => {
   try {
+    console.log("post ask");
+    console.log(req.body);
     const { email, category, title, content } = req.body;
+
+    if (
+      typeof title !== "string" ||
+      typeof content !== "string" ||
+      typeof email !== "string" ||
+      typeof category !== "string"
+    ) {
+      res.status(400).json({
+        code: 400,
+        success: false,
+        message: "유효한 형식의 데이터가 아닙니다.",
+      });
+    }
 
     if (
       email.length === 0 ||
@@ -348,6 +370,15 @@ router.post("/ask", async (req, res) => {
         message: "모든 항목을 입력해주세요.",
       });
     }
+
+    if (!validateEmail(email)) {
+      return res.status(400).json({
+        code: 400,
+        success: false,
+        message: "유효한 형식의 이메일이 아닙니다.",
+      });
+    }
+
     //오버플로우 방지
     if (title.length > 100) {
       res.status(400).json({
@@ -364,16 +395,8 @@ router.post("/ask", async (req, res) => {
         message: "내용은 1000자 이내로 입력해주세요.",
       });
     }
-    //이메일 유효성 검사
-    if (!validateEmail(email)) {
-      res.status(400).json({
-        code: 400,
-        success: false,
-        message: "유효한 형식의 이메일이 아닙니다.",
-      });
-    }
-    //카테고리 유효성 검사
 
+    //카테고리 유효성 검사
     if (!categorylist.includes(category)) {
       res.status(400).json({
         code: 400,
@@ -382,6 +405,12 @@ router.post("/ask", async (req, res) => {
       });
     }
     console.log("유효성 검사 완료");
+    res.status(200).json({ message: "메일발송성공" });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "게시글작성서버에러" });
+  }
+  try {
     let transporter = smtpTransport;
     let mailOptions = {
       from: `${process.env.EMAIL}`, //송신할 이메일
@@ -400,11 +429,9 @@ router.post("/ask", async (req, res) => {
     console.log(mailOptions);
     await transporter.sendMail(mailOptions);
     console.log("메일 발송 성공");
-
-    res.status(200).json({ message: "메일발송성공" });
   } catch (err) {
     console.log(err);
-    res.status(500).json({ message: "게시글작성서버에러" });
+    res.status(500).json({ message: "이메일전송서버에러" });
   }
 });
 
