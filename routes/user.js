@@ -28,8 +28,8 @@ const categorylist = [
   "오류 신고",
   "기타",
 ];
-const URL = process.env.LOCAL_URL;
-const API_URL = process.env.LOCAL_API_URL;
+const URL = process.env.PUBLISH_URL;
+const API_URL = process.env.PUBLISH_API_URL;
 // const validateUserId = (userid) => {
 //   const useridRegex = /^[a-zA-Z0-9]{4,10}$/;
 //   return useridRegex.test(userid);
