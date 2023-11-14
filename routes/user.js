@@ -10,6 +10,7 @@ const passport = require("../config/passport");
 const fs = require("fs");
 const { returnUser } = require("../config/middleware");
 const smtpTransport = require("../config/email");
+const Joi = require("joi");
 const {
   generatePassword,
   isLoggedIn,
@@ -28,8 +29,8 @@ const categorylist = [
   "오류 신고",
   "기타",
 ];
-const URL = process.env.LOCAL_URL;
-const API_URL = process.env.LOCAL_API_URL;
+const URL = process.env.PUBLISH_URL;
+const API_URL = process.env.PUBLISH_API_URL;
 // const validateUserId = (userid) => {
 //   const useridRegex = /^[a-zA-Z0-9]{4,10}$/;
 //   return useridRegex.test(userid);
@@ -435,4 +436,25 @@ router.post("/ask", async (req, res) => {
   }
 });
 
+router.post("/posttest", async (req, res) => {
+  const schema = Joi.object({
+    email: Joi.string().email().required(),
+    name: Joi.string().min(2).max(30).required(),
+    age: Joi.number().integer().min(0),
+  });
+
+  const data = {
+    email: "john.doe@example.com",
+    name: "John Doe",
+    age: 25,
+  };
+
+  const validation = schema.validate(data);
+
+  if (validation.error) {
+    console.log(validation.error.details);
+  } else {
+    console.log("Validation passed!");
+  }
+});
 module.exports = router;
