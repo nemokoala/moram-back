@@ -79,7 +79,7 @@ router.get("/popular", async (req, res) => {
   try {
     // 좋아요 수가 가장 많은 상위 3개 게시글을 선택하는 SQL 쿼리
     const popularSql =
-      "SELECT *, users.img AS profileImg FROM postings LEFT JOIN users on postings.userId = users.id ORDER BY likesCount DESC LIMIT 3";
+      "SELECT postings.*, users.img AS profileImg FROM postings LEFT JOIN users on postings.userId = users.id ORDER BY postings.likesCount DESC LIMIT 3";
 
     // SQL 쿼리 실행
     const [results] = await db.query(popularSql);
