@@ -18,7 +18,7 @@ router.get("/:postId", async (req, res) => {
   const postId = req.params.postId;
   try {
     const allSql = `
-      SELECT comments.*, users.nickname 
+      SELECT comments.*, users.nickname, users.img AS profileImg
       FROM comments
       JOIN users ON comments.userId = users.id
       WHERE comments.postId = ?
