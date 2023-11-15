@@ -129,7 +129,7 @@ router.post("/forgotpw", isNotLoggedIn, async (req, res) => {
         href="${API_URL}/login/reset/${token}"
         rel="noreferrer noopener"
         target="_blank"
-        >http://${API_URL}/login/reset/${token}</a
+        >${API_URL}/login/reset/${token}</a
       >
     </div>`,
     };
@@ -147,19 +147,11 @@ router.post("/forgotpw", isNotLoggedIn, async (req, res) => {
 router.get("/reset/:token", async (req, res) => {
   const { token } = req.params;
   try {
-    function returnUser(user) {
-      const userData = {
-        id: user.id,
-        nickname: user.nickname,
-        platformType: user.platformType,
-        email: user.email,
-        gptCount: user.gptCount,
-        role: user.role,
-      };
-      return userData;
-    }
     const sql = `SELECT * FROM pwdVerification WHERE token = ? AND expiresAt > NOW()`;
     const [result] = await db.query(sql, [token]);
+    if (result.length === 0) {
+      return res.status(400).json({ message: "인증코드가 만료되었습니다." });
+    }
     const newPassword = result[0].pwd;
     console.log(`newpassword:${newPassword}`);
     const updateSql = `UPDATE users SET password = ? WHERE email = ?`;
