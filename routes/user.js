@@ -29,11 +29,11 @@ const categorylist = [
   "기타",
 ];
 if (process.env.IS_PUBLISHED === "TRUE") {
-  const URL = process.env.PUBLISH_URL;
-  const API_URL = process.env.PUBLISH_API_URL;
+  var URL = process.env.PUBLISH_URL;
+  var API_URL = process.env.PUBLISH_API_URL;
 } else {
-  const URL = "http://localhost:3000";
-  const API_URL = "http://localhost:8000";
+  var URL = "http://localhost:3000";
+  var API_URL = "http://localhost:8000";
 }
 
 // const validateUserId = (userid) => {
@@ -271,13 +271,12 @@ router.get("/check", (req, res) => {
   else return res.status(403).json({ message: "로그인 정보가 없습니다." });
 });
 
-router.get("/test", async (req, res) => {
-  const certifyResponse = await axios.post(`${URL}/user/certify`, {
-    key: `${process.env.UNIVCERT_KEY}`,
-    email: "c1004sos@wku.ac.kr",
-    univName: "원광대학교",
-    univ_check: true,
-  });
+router.post("/test", async (req, res) => {
+  console.log("test");
+  if (process.env.IS_PUBLISHED === "TRUE") {
+    console.log("트루");
+  }
+  console.log(URL, API_URL);
 });
 
 router.get("/kakao", isNotLoggedIn, passport.authenticate("kakao"));
