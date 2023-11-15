@@ -117,7 +117,7 @@ router.post("/forgotpw", isNotLoggedIn, async (req, res) => {
       <p>요청한 계정 정보는 아래와 같습니다.</p>
       <hr />
       <ul>
-        <li>사이트 : <a href="https://www.moram.com">https://www.moram.com</a></li>
+        <li>사이트 : <a href="https://www.moram2.com">https://www.moram2.com</a></li>
         <li>이메일 : ${user[0].email}</li>
         <li>닉네임 : ${user[0].nickname}</li>
         <li>비밀번호 :${newpassword}</li>
@@ -137,7 +137,7 @@ router.post("/forgotpw", isNotLoggedIn, async (req, res) => {
     await transporter.sendMail(mailOptions);
     console.log("메일 발송 성공");
 
-    res.status(200).json({ message: "메일발송성공" });
+    res.status(200).json({ message: "메일 발송 성공" });
   } catch (err) {
     console.log(err);
     res.status(500).json({ message: "서버에러" });

@@ -164,7 +164,7 @@ router.post("/certuniv", isLoggedIn, async (req, res) => {
     </div>`,
     };
     await transporter.sendMail(mailOptions);
-    console.log("메일발송성공");
+    console.log("메일 발송 성공");
     res.status(200).json({
       code: 200,
       success: true,
@@ -410,10 +410,10 @@ router.post("/ask", async (req, res) => {
       });
     }
     console.log("유효성 검사 완료");
-    res.status(200).json({ message: "메일발송성공" });
+    res.status(200).json({ message: "메일 발송 성공" });
   } catch (err) {
     console.log(err);
-    res.status(500).json({ message: "게시글작성서버에러" });
+    res.status(500).json({ message: "게시글 작성 서버 에러" });
   }
   try {
     let transporter = smtpTransport;
