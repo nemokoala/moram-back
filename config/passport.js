@@ -72,7 +72,10 @@ passport.use(
 
         const searchSql =
           "SELECT * FROM users WHERE email = ? AND platformType = ?";
-        [user] = await db.query(searchSql, ["c1004sos1@daum.net", "kakao"]);
+        [user] = await db.query(searchSql, [
+          profile._json.kakao_account.email,
+          "kakao",
+        ]);
         console.log("----user: ----", user);
         console.log("----user: ----", user);
         console.log("----user 끝----");
@@ -91,9 +94,11 @@ passport.use(
           console.log("----카카오 계정으로 회원가입 시작 ----");
 
           // 로컬로 회원가입된 이메일이 있는경우
-          const searchSql2 = "SELECT * FROM users WHERE email = ?";
+          const searchSql2 =
+            "SELECT * FROM users WHERE email = ? AND platformType = ?";
           const [user2] = await db.query(searchSql2, [
             profile._json.kakao_account.email,
+            "local",
           ]);
           if (user2.length > 0) {
             console.log("----카카오 계정으로 회원가입 실패 ----");
