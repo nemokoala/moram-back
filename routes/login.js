@@ -25,8 +25,13 @@ router.use(express.json());
 //   res.render("login");
 // });
 
-const URL = process.env.PUBLISH_URL;
-const API_URL = process.env.PUBLISH_API_URL;
+if (process.env.IS_PUBLISHED === "TRUE") {
+  const URL = process.env.PUBLISH_URL;
+  const API_URL = process.env.PUBLISH_API_URL;
+} else {
+  const URL = "http://localhost:3000";
+  const API_URL = "http://localhost:8000";
+}
 
 router.post("/", isNotLoggedIn, async (req, res, next) => {
   //? local로 실행이 되면 localstrategy.js를 찾아 실행한다.
