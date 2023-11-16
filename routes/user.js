@@ -356,7 +356,7 @@ router.post("/ask", async (req, res) => {
       typeof email !== "string" ||
       typeof category !== "string"
     ) {
-      res.status(400).json({
+      return res.status(400).json({
         code: 400,
         success: false,
         message: "유효한 형식의 데이터가 아닙니다.",
@@ -369,7 +369,7 @@ router.post("/ask", async (req, res) => {
       title.length === 0 ||
       content.length === 0
     ) {
-      res.status(400).json({
+      return res.status(400).json({
         code: 400,
         success: false,
         message: "모든 항목을 입력해주세요.",
@@ -386,7 +386,7 @@ router.post("/ask", async (req, res) => {
 
     //오버플로우 방지
     if (title.length > 100) {
-      res.status(400).json({
+      return res.status(400).json({
         code: 400,
         success: false,
         message: "제목은 100자 이내로 입력해주세요.",
@@ -394,7 +394,7 @@ router.post("/ask", async (req, res) => {
     }
     //오버플로우 방지
     if (content.length > 1000) {
-      res.status(400).json({
+      return res.status(400).json({
         code: 400,
         success: false,
         message: "내용은 1000자 이내로 입력해주세요.",
@@ -403,19 +403,14 @@ router.post("/ask", async (req, res) => {
 
     //카테고리 유효성 검사
     if (!categorylist.includes(category)) {
-      res.status(400).json({
+      return res.status(400).json({
         code: 400,
         success: false,
         message: "유효한 형식의 카테고리가 아닙니다.",
       });
     }
     console.log("유효성 검사 완료");
-    res.status(200).json({ message: "메일 발송 성공" });
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ message: "게시글 작성 서버 에러" });
-  }
-  try {
+
     let transporter = smtpTransport;
     let mailOptions = {
       from: `${process.env.EMAIL}`, //송신할 이메일
@@ -434,9 +429,11 @@ router.post("/ask", async (req, res) => {
     console.log(mailOptions);
     await transporter.sendMail(mailOptions);
     console.log("메일 발송 성공");
+
+    res.status(200).json({ message: "메일 발송 성공" });
   } catch (err) {
     console.log(err);
-    res.status(500).json({ message: "이메일전송서버에러" });
+    res.status(500).json({ message: "게시글 작성 서버 에러" });
   }
 });
 
