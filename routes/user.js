@@ -148,7 +148,7 @@ router.post("/certuniv", isLoggedIn, async (req, res) => {
     console.log(token);
     let transporter = smtpTransport;
     let mailOptions = {
-      from: "c1004sos@1gmail.com", //송신할 이메일
+      from: process.env.EMAIL, //송신할 이메일
       to: receivedEmail, //수신할 이메일
       subject: "[모람모람]대학교 인증 메일입니다.",
       html: ` <div>
@@ -182,7 +182,7 @@ router.get("/univActivate/:token", async (req, res) => {
     const sql = `SELECT * FROM univVerification WHERE token = ? AND expiresAt > NOW()`;
     const [result] = await db.query(sql, [token]);
     if (result.length === 0) {
-      res.status(400).send("만료된 토큰입니다. 재인증 해주세요.");
+      return res.status(400).send("만료된 토큰입니다. 재인증 해주세요.");
     }
     const univName = result[0].univName;
     const email = result[0].verifiedEmail;
