@@ -39,7 +39,7 @@ router.post("/", isLoggedIn, async (req, res) => {
         {
           role: "system",
           content:
-            "다음 내용들을 회사에 지원을 할때 제출할 자기소개서 형식에 맞춰서 1000 글자로 정리해줘",
+            "다음 내용들을 회사에 지원을 할때 제출할 자기소개서 형식에 맞춰서 800 글자로 정리해줘",
         },
         {
           role: "user",
@@ -47,7 +47,7 @@ router.post("/", isLoggedIn, async (req, res) => {
         },
       ],
       temperature: 1,
-      max_tokens: 1500,
+      max_tokens: 1200,
       top_p: 1,
       frequency_penalty: 0,
       presence_penalty: 0,
