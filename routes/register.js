@@ -91,7 +91,7 @@ router.post("/", isNotLoggedIn, async (req, res) => {
     }
     console.log("회원가입중");
 
-    const sql = `INSERT INTO users (platformType, nickname, email, password) VALUES (?, ?, ?, ?)`;
+    const sql = `INSERT IGNORE INTO users (platformType, nickname, email, password) VALUES (?, ?, ?, ?)`;
     hash = await bcrypt.hash(password, 12);
     await db.query(sql, ["local", nickname, email, hash]);
     res.status(200).json("회원가입 성공");
