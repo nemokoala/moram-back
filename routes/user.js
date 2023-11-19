@@ -407,7 +407,7 @@ router.post("/ask", async (req, res) => {
       });
     }
     console.log("유효성 검사 완료");
-
+    res.status(200).json({ message: "메일 발송 성공" });
     let transporter = smtpTransport;
     let mailOptions = {
       from: `${process.env.EMAIL}`, //송신할 이메일
@@ -425,9 +425,7 @@ router.post("/ask", async (req, res) => {
     };
     console.log(mailOptions);
     await transporter.sendMail(mailOptions);
-    console.log("메일 발송 성공");
-
-    res.status(200).json({ message: "메일 발송 성공" });
+    console.log("서버응답 후 메일 발송 성공");
   } catch (err) {
     console.log(err);
     res.status(500).json({ message: "게시글 작성 서버 에러" });
