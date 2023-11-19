@@ -69,19 +69,83 @@ passport.use(
         console.log(
           `----profile.email: ${profile._json.kakao_account.email} ----`
         );
+        if (profile._json.kakao_account.email) {
+          console.log("에휴?");
+          const searchSql =
+            "SELECT * FROM users WHERE email = ? AND platformType = ?";
+          [user] = await db.query(searchSql, [
+            profile._json.kakao_account.email,
+            "kakao",
+          ]);
+          console.log("----user: ----", user);
+          console.log("----user: ----", user);
+          console.log("----user 끝----");
+          console.log("----user.length: ----", user.length);
 
-        const searchSql =
-          "SELECT * FROM users WHERE email = ? AND platformType = ?";
-        [user] = await db.query(searchSql, [
-          profile._json.kakao_account.email,
-          "kakao",
-        ]);
-        console.log("----user: ----", user);
-        console.log("----user: ----", user);
-        console.log("----user 끝----");
-        console.log("----user.length: ----", user.length);
+          // 이미 가입된 카카오 프로필이면 성공
+          if (user.length > 0) {
+            console.log("----카카오 계정으로 로그인 시작 ----");
+            console.log(profile);
+            return done(null, user, {
+              code: 200,
+              success: true,
+              message: "카카오 계정으로 로그인 성공",
+            });
+          } else if (user.length === 0) {
+            console.log("----카카오 계정으로 회원가입 시작 ----");
 
-        // 이미 가입된 카카오 프로필이면 성공
+            // 로컬로 회원가입된 이메일이 있는경우
+            const searchSql2 =
+              "SELECT * FROM users WHERE email = ? AND platformType = ?";
+            const [user2] = await db.query(searchSql2, [
+              profile._json.kakao_account.email,
+              "local",
+            ]);
+            if (user2.length > 0) {
+              console.log("----카카오 계정으로 회원가입 실패 ----");
+              return done(null, false, {
+                code: 401,
+                success: false,
+                message: "이미 가입한 이메일 계정이 있습니다.",
+              });
+            }
+            console.log("중복이메일x 회원정보생성");
+
+            // db에 회원정보 생성
+            let [results] = await db.query(
+              "INSERT INTO users (_id, platformType, nickname, email, password) VALUES (?, ?, ?, ?, ?)",
+              [
+                profile._json.id,
+                "kakao",
+                profile.username,
+                profile._json.kakao_account.email,
+                0,
+              ]
+            );
+            console.log("----카카오 계정으로 회원가입 성공 ----");
+            const searchSql3 = "SELECT * FROM users WHERE email = ?";
+            const [user3] = await db.query(searchSql3, [
+              profile._json.kakao_account.email,
+            ]);
+
+            console.log(user3);
+            console.log(1);
+            return done(null, user3, {
+              code: 200,
+              success: true,
+              message: "카카오 계정으로 회원가입 성공",
+            });
+          }
+        } else if (!profile._json.kakao_account.email) {
+          console.log("아휴");
+          const searchSql =
+            "SELECT * FROM users WHERE _id = ? AND platformType = ?";
+          [user] = await db.query(searchSql, [profile._json.id, "kakao"]);
+          console.log("----user: ----", user);
+
+          // 이미 가입된 카카오 프로필이면 성공
+        }
+
         if (user.length > 0) {
           console.log("----카카오 계정으로 로그인 시작 ----");
           console.log(profile);
@@ -93,11 +157,10 @@ passport.use(
         } else if (user.length === 0) {
           console.log("----카카오 계정으로 회원가입 시작 ----");
 
-          // 로컬로 회원가입된 이메일이 있는경우
           const searchSql2 =
-            "SELECT * FROM users WHERE email = ? AND platformType = ?";
+            "SELECT * FROM users WHERE _id = ? AND platformType = ?";
           const [user2] = await db.query(searchSql2, [
-            profile._json.kakao_account.email,
+            profile._json.id,
             "local",
           ]);
           if (user2.length > 0) {
@@ -117,15 +180,13 @@ passport.use(
               profile._json.id,
               "kakao",
               profile.username,
-              profile._json.kakao_account.email,
+              `${profile._json.id}@kakao.com`,
               0,
             ]
           );
           console.log("----카카오 계정으로 회원가입 성공 ----");
-          const searchSql3 = "SELECT * FROM users WHERE email = ?";
-          const [user3] = await db.query(searchSql3, [
-            profile._json.kakao_account.email,
-          ]);
+          const searchSql3 = "SELECT * FROM users WHERE _id = ?";
+          const [user3] = await db.query(searchSql3, [profile._json.id]);
 
           console.log(user3);
           console.log(1);
@@ -146,20 +207,20 @@ passport.use(
 passport.serializeUser(function (user, done) {
   console.log("serializeUser() 호출됨.");
 
-  const user2 = {
-    id: user[0].id,
-    platformType: user[0].platformType,
-    nickname: user[0].nickname,
-    email: user[0].email,
-    regDate: user[0].regDate,
-    verified: user[0].verified,
-    _id: user[0]._id,
-    univName: user[0].univName,
-    img: user[0].img,
-  };
-  console.log(user2);
+  // const user2 = {
+  //   id: user[0].id,
+  //   platformType: user[0].platformType,
+  //   nickname: user[0].nickname,
+  //   email: user[0].email,
+  //   regDate: user[0].regDate,
+  //   verified: user[0].verified,
+  //   _id: user[0]._id,
+  //   univName: user[0].univName,
+  //   img: user[0].img,
+  // };
+  // console.log(user2);
 
-  done(null, user2);
+  done(null, user);
 });
 
 passport.deserializeUser(function (user, done) {
