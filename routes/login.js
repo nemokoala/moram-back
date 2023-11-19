@@ -34,6 +34,14 @@ if (process.env.IS_PUBLISHED === "TRUE") {
 }
 
 router.post("/", isNotLoggedIn, async (req, res, next) => {
+  if (!req.body.email || !req.body.password) {
+    console.log("이메일 또는 비밀번호를 입력하세요.");
+    return res.status(401).json({
+      code: 401,
+      success: false,
+      message: "이메일 또는 비밀번호를 입력하세요.",
+    });
+  }
   //? local로 실행이 되면 localstrategy.js를 찾아 실행한다.
   passport.authenticate("local", (authError, user, info) => {
     //? (authError, user, info) => 이 콜백 미들웨어는 localstrategy에서 done()이 호출되면 실행된다.
