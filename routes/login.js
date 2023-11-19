@@ -116,6 +116,7 @@ router.post("/forgotpw", isNotLoggedIn, async (req, res) => {
     const insertSql = `INSERT INTO pwdVerification (token, email, pwd, expiresAt) VALUES (?, ?, ?, ?)`;
     await db.query(insertSql, [token, mail, hashedPassword, ttl]);
     console.log(user);
+    res.status(200).json({ message: "메일 발송 성공" });
     let transporter = smtpTransport;
     let mailOptions = {
       from: process.env.EMAIL, //송신할 이메일
@@ -142,10 +143,9 @@ router.post("/forgotpw", isNotLoggedIn, async (req, res) => {
     </div>`,
     };
     console.log(mailOptions);
-    await transporter.sendMail(mailOptions);
-    console.log("메일 발송 성공");
 
-    res.status(200).json({ message: "메일 발송 성공" });
+    await transporter.sendMail(mailOptions);
+    console.log("응답 후 메일 발송 성공");
   } catch (err) {
     console.log(err);
     res.status(500).json({ message: "서버에러" });

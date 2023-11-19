@@ -126,7 +126,7 @@ router.post("/", isNotLoggedIn, async (req, res) => {
 // });
 
 router.post("/mailsend", async (req, res, next) => {
-  console.log("메일 전송");
+  console.log("mailsend post 요청");
   try {
     const { email } = req.body;
 
@@ -156,22 +156,20 @@ router.post("/mailsend", async (req, res, next) => {
     if (user.length > 0) {
       return res.status(403).json({ message: "이미 존재하는 이메일입니다." });
     }
-
+    res.status(200).json({ message: "메일 발신 성공" });
     let mailOptions = {
       from: process.env.EMAIL, //송신할 이메일
       to: email, //수신할 이메일
       subject: "[모람모람]인증 관련 이메일 입니다",
       text: `오른쪽 숫자 6자리를 입력해주세요 : ${authcode}`,
     };
-    console.log(mailOptions);
     await transporter.sendMail(mailOptions);
-    console.log("메일 발송 성공");
+    console.log("응답 후 메일 발송 성공");
 
     //db에 인증 정보 저장 (이메일, 인증코드, 만료시간)
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
     const sql = `INSERT INTO emailVerification (email, authcode, expiresAt) VALUES (?, ?, ?)`;
     db.query(sql, [email, authcode, expiresAt]);
-    res.status(200).json({ message: "메일 발신 성공" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "서버에러" });

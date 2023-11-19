@@ -143,9 +143,11 @@ router.post("/certuniv", isLoggedIn, async (req, res) => {
     ]);
 
     // 대학교 인증 메일 발송
-    console.log(emailDomain);
-
-    console.log(token);
+    res.status(200).json({
+      code: 200,
+      success: true,
+      message: "대학교 인증 메일이 발송되었습니다. 링크를 클릭해주세요.",
+    });
     let transporter = smtpTransport;
     let mailOptions = {
       from: process.env.EMAIL, //송신할 이메일
@@ -164,12 +166,7 @@ router.post("/certuniv", isLoggedIn, async (req, res) => {
     </div>`,
     };
     await transporter.sendMail(mailOptions);
-    console.log("메일 발송 성공");
-    res.status(200).json({
-      code: 200,
-      success: true,
-      message: "대학교 인증 메일이 발송되었습니다. 링크를 클릭해주세요.",
-    });
+    console.log("서버 응답 후 메일 발송 성공");
   } catch (err) {
     console.log(err);
     res.status(500).json({ message: "대학인증서버에러" });
