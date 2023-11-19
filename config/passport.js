@@ -16,7 +16,7 @@ passport.use(
       passReqToCallback: true,
     },
     async (req, email, password, done) => {
-      console.log("passport의 local-login : ", email, password);
+      console.log("passport의 local-login : ", email);
       let users;
       try {
         sql = "SELECT * FROM users WHERE email = ?";
@@ -145,8 +145,21 @@ passport.use(
 
 passport.serializeUser(function (user, done) {
   console.log("serializeUser() 호출됨.");
-  console.log(user);
-  done(null, user);
+
+  const user2 = {
+    id: user[0].id,
+    platformType: user[0].platformType,
+    nickname: user[0].nickname,
+    email: user[0].email,
+    regDate: user[0].regDate,
+    verified: user[0].verified,
+    _id: user[0]._id,
+    univName: user[0].univName,
+    img: user[0].img,
+  };
+  console.log(user2);
+
+  done(null, user2);
 });
 
 passport.deserializeUser(function (user, done) {

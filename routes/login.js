@@ -70,7 +70,6 @@ router.post("/", isNotLoggedIn, async (req, res, next) => {
       }
       // done(null, user)로 로직이 성공적이라면, 세션에 사용자 정보를 저장해놔서 로그인 상태가 된다.
       //자동로그인
-      console.log(req.body);
       if (req.body.remember) {
         req.session.cookie.expires = 1000 * 60 * 60 * 24 * 7; //쿠키 유효기간 7일
       } else {
