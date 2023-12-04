@@ -124,7 +124,9 @@ router.get("/report/:id", isLoggedIn, isAdmin, async (req, res) => {
 //4.1 전체 댓글 조회하기
 router.get("/allcomments", isLoggedIn, isAdmin, async (req, res) => {
   try {
-    const allcommetSql = "SELECT * FROM comments";
+    const allcommetSql =
+      "SELECT comments.*, users.nickname FROM comments \
+    LEFT JOIN users on comments.userId = users.id";
     const [results] = await db.query(allcommetSql);
     res.status(200).json({ content: results });
   } catch (error) {
