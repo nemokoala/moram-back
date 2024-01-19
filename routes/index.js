@@ -1,4 +1,4 @@
-const dotenv = require("dotenv").config({ path: "/moram-back/.env" });
+require("dotenv").config({ path: "/moram-back/.env" });
 const express = require("express");
 const db = require("../config/db");
 const cors = require("cors");
