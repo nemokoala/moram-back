@@ -1,5 +1,3 @@
-const dotenv = require("dotenv");
-dotenv.config();
 const passport = require("passport");
 const LocalStrategy = require("passport-local").Strategy;
 const KakaoStrategy = require("passport-kakao").Strategy;
