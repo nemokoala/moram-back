@@ -41,7 +41,7 @@ if (process.env.IS_PUBLISHED === "TRUE") {
 //   return useridRegex.test(userid);
 // };
 
-router.get("/", async (req, res) => {
+router.get("/", isLoggedIn, isAdmin, async (req, res) => {
   try {
     const [results] = await db.query("SELECT * FROM users");
     res.json(results);
