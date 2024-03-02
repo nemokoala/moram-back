@@ -8,9 +8,10 @@ const ejs = require("ejs");
 const axios = require("axios");
 const passport = require("../config/passport");
 const fs = require("fs");
-const { returnUser, isLoggedIn, isAdmin } = require("../config/middleware");
 const smtpTransport = require("../config/email");
 const {
+  returnUser,
+  isAdmin,
   generatePassword,
   isLoggedIn,
   isNotLoggedIn,
